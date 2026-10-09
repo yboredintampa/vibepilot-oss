@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Library - VibePilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-purple { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+    .card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.1); backdrop-filter: blur(10px); }
+    .card:hover { border-color: rgba(168, 85, 247, 0.3); }
+  </style>
+</head>
+<body class="text-gray-100 font-sans">
+
+<!-- Header -->
+<header class="gradient-purple shadow-lg">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">🟣 VibePilot</h1>
+      <p class="text-sm text-purple-100">{{ user.business_name }}</p>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/dashboard" class="hover:text-white">Overview</a>
+      <a href="/dashboard/posts" class="hover:text-white font-semibold">Content</a>
+      <a href="/dashboard/analytics" class="hover:text-white">Analytics</a>
+      <a href="/dashboard/settings" class="hover:text-white">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">📚 Content Library</h1>
+    <p class="text-gray-400">All your scheduled and published posts</p>
+  </div>
+
+  <!-- Posts Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for post in posts %}
+    <div class="card rounded-2xl overflow-hidden">
+      <div class="aspect-video bg-gray-900 relative">
+        <img src="{{ post.image_url }}" alt="Post preview" class="w-full h-full object-cover">
+        <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+          {{ post.scheduled_time[:16].replace('T', ' ') }}
+        </div>
+      </div>
+      <div class="p-4">
+        <p class="text-sm text-gray-300 mb-3">{{ post.caption }}</p>
+        <div class="flex gap-2 mb-3">
+          <span class="text-xs px-2 py-1 rounded bg-blue-900 text-blue-200">{{ post.tone }}</span>
+          {% if post.has_cta %}
+          <span class="text-xs px-2 py-1 rounded bg-green-900 text-green-200">CTA</span>
+          {% endif %}
+        </div>
+        <div class="flex gap-2">
+          <button class="flex-1 text-xs py-2 rounded bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+            ✓ Approve
+          </button>
+          <button class="flex-1 text-xs py-2 rounded bg-gray-700 hover:bg-gray-600 text-white">
+            Edit
+          </button>
+          <button class="text-xs px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white">
+            🔄
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</main>
+
+</body>
+</html>

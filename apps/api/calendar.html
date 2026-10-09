@@ -1,0 +1,119 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VibePilot Calendar</title>
+  <link rel="stylesheet" href="/app/styles.css">
+</head>
+<body>
+  <header class="hdr">
+    <div class="brand">VibePilot</div>
+    <nav class="nav">
+      <a href="/app/">Dashboard</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <section class="panel">
+      <h2>Content Calendar</h2>
+      <div class="row">
+        <button id="load">Load from API</button>
+        <button id="save">Save to API</button>
+        <button id="add">Add Row</button>
+      </div>
+      <div class="hint">API Base is taken from localStorage key <code>VP_API_BASE</code>. Set it on the Dashboard.</div>
+      <table id="tbl" class="tbl">
+        <thead>
+          <tr>
+            <th>date</th><th>time</th><th>asset_type</th><th>lang</th>
+            <th>premium_video</th><th>video_duration</th><th>video_prompt</th><th>caption_hint</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="msg" class="log"></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = localStorage.getItem('VP_API_BASE') || '';
+    const $ = s => document.querySelector(s);
+    const tbl = $('#tbl tbody');
+    const msg = $('#msg');
+
+    function rowToTr(r){
+      const tr = document.createElement('tr');
+      const fields = ['date','time','asset_type','lang','premium_video','video_duration','video_prompt','caption_hint'];
+      for (const f of fields){
+        const td = document.createElement('td');
+        const inp = document.createElement('input');
+        inp.value = r[f] ?? '';
+        inp.dataset.field = f;
+        td.appendChild(inp);
+        tr.appendChild(td);
+      }
+      const tdDel = document.createElement('td');
+      const btn = document.createElement('button');
+      btn.textContent = '';
+      btn.onclick = () => tr.remove();
+      tdDel.appendChild(btn);
+      tr.appendChild(tdDel);
+      return tr;
+    }
+
+    async function loadCalendar(){
+      if(!API_BASE){ msg.textContent = 'Set API Base on Dashboard first.'; return; }
+      msg.textContent = 'Loading...';
+      try{
+        const r = await fetch(API_BASE + '/calendar', {mode:'cors'});
+        const j = await r.json();
+        tbl.innerHTML = '';
+        (j.rows || []).forEach(r => tbl.appendChild(rowToTr(r)));
+        msg.textContent = 'Loaded ' + (j.rows?.length || 0) + ' rows.';
+      }catch(e){
+        msg.textContent = 'Load failed: ' + e;
+      }
+    }
+
+    function collectRows(){
+      const rows = [];
+      [...tbl.querySelectorAll('tr')].forEach(tr => {
+        const r = {};
+        tr.querySelectorAll('input').forEach(inp => {
+          r[inp.dataset.field] = inp.value.trim();
+        });
+        rows.push(r);
+      });
+      return rows;
+    }
+
+    async function saveCalendar(){
+      if(!API_BASE){ msg.textContent = 'Set API Base on Dashboard first.'; return; }
+      const payload = { rows: collectRows() };
+      msg.textContent = 'Saving...';
+      try{
+        const r = await fetch(API_BASE + '/calendar', {
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body: JSON.stringify(payload),
+          mode:'cors'
+        });
+        const j = await r.json();
+        msg.textContent = 'Saved ' + (j.count || 0) + ' rows.';
+      }catch(e){
+        msg.textContent = 'Save failed: ' + e;
+      }
+    }
+
+    function addRow(){
+      const r = { date:'2025-10-06', time:'09:00', asset_type:'image', lang:'en', premium_video:0, video_duration:0, video_prompt:'', caption_hint:'' };
+      tbl.appendChild(rowToTr(r));
+    }
+
+    document.getElementById('load').onclick = loadCalendar;
+    document.getElementById('save').onclick = saveCalendar;
+    document.getElementById('add').onclick  = addRow;
+  </script>
+</body>
+</html>

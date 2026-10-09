@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - VibePilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-purple { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+    .card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="text-gray-100 font-sans">
+
+<!-- Header -->
+<header class="gradient-purple shadow-lg">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">🟣 VibePilot</h1>
+      <p class="text-sm text-purple-100">{{ user.business_name }}</p>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/dashboard" class="hover:text-white transition">Overview</a>
+      <a href="/dashboard/posts" class="hover:text-white transition">Content</a>
+      <a href="/dashboard/analytics" class="hover:text-white transition">Analytics</a>
+      <a href="/dashboard/settings" class="hover:text-white font-semibold transition">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">⚙️ Settings</h1>
+    <p class="text-gray-400">Configure your VibePilot experience</p>
+  </div>
+
+  <!-- QR CODE SECTION -->
+  <div class="card rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">🎯 QR Reputation System</h2>
+    <p class="text-sm text-gray-400 mb-6">Generate QR codes for verified reviews. Print on invoices, trucks, or shirts!</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- QR Code Display -->
+      <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 text-center">
+        <div id="qrCodeContainer" class="mb-4">
+          <div class="text-gray-500 text-sm mb-4">Click "Generate QR Code" to create your unique code</div>
+        </div>
+        <button id="generateQR" class="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition mb-2">
+          Generate QR Code
+        </button>
+        <button id="downloadQR" class="hidden w-full py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition">
+          Download PNG
+        </button>
+
+        <button id="downloadStickers" class="hidden w-full py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white text-sm transition mt-2">
+          📄 Download Sticker Sheet (8-up)
+        </button>
+      </div>
+
+      <!-- Instructions -->
+      <div class="space-y-4">
+        <div class="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
+          <div class="font-semibold text-blue-200 mb-2">📱 How it works:</div>
+          <ol class="text-sm text-blue-300 space-y-1 list-decimal list-inside">
+            <li>Customer scans QR code</li>
+            <li>Leaves verified review</li>
+            <li>Gets 10% discount code</li>
+            <li>You get portable reputation!</li>
+          </ol>
+        </div>
+
+        <div class="bg-purple-900 bg-opacity-30 border border-purple-700 rounded-lg p-4">
+          <div class="font-semibold text-purple-200 mb-2">🖨️ Where to print:</div>
+          <ul class="text-sm text-purple-300 space-y-1">
+            <li>• Invoice footer</li>
+            <li>• Truck/vehicle wrap</li>
+            <li>• Business cards</li>
+            <li>• T-shirts/uniforms</li>
+          </ul>
+        </div>
+
+        <div id="reviewStats" class="hidden bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-4">
+          <div class="font-semibold text-green-200 mb-2">✅ Your Stats:</div>
+          <div class="text-sm text-green-300">
+            <div>Reviews collected: <span class="font-bold">0</span></div>
+            <div>Average rating: <span class="font-bold">-</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- One-Time Review Links -->
+    <div class="mt-6 pt-6 border-t border-gray-700">
+      <h3 class="text-lg font-semibold mb-3">📨 Send Review Link (One-Time)</h3>
+      <p class="text-sm text-gray-400 mb-4">Generate a unique review link to send via text/email after completing a job</p>
+
+      <div class="flex gap-3">
+        <input
+          type="text"
+          id="jobDescription"
+          placeholder="Job description (e.g., Panel upgrade - 123 Main St)"
+          class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-purple-500 focus:outline-none"
+        >
+        <button id="generateLink" class="px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition whitespace-nowrap">
+          Generate Link
+        </button>
+      </div>
+
+      <div id="generatedLinkContainer" class="hidden mt-4 bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div class="text-sm text-gray-400 mb-2">Share this link with your customer:</div>
+        <div class="flex gap-2">
+          <input
+            type="text"
+            id="generatedLink"
+            readonly
+            class="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-purple-300 font-mono"
+          >
+          <button id="copyLink" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white text-sm font-semibold transition">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Info -->
+  <div class="card rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">Business Information</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm text-gray-400 mb-2">Business Name</label>
+        <input type="text" value="{{ user.business_name }}" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-purple-500 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-400 mb-2">Trade Type</label>
+        <select class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-purple-500 focus:outline-none">
+          <option {% if user.trade == "electrical" %}selected{% endif %}>Electrical</option>
+          <option {% if user.trade == "hvac" %}selected{% endif %}>HVAC</option>
+          <option {% if user.trade == "plumbing" %}selected{% endif %}>Plumbing</option>
+          <option {% if user.trade == "pool_service" %}selected{% endif %}>Pool Service</option>
+          <option {% if user.trade == "dog_grooming" %}selected{% endif %}>Dog Grooming</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posting Schedule -->
+  <div class="card rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">Posting Schedule</h2>
+    <p class="text-sm text-gray-400 mb-4">Currently posting {{ posts_per_week }} times per week</p>
+    <div class="space-y-3">
+      <label class="flex items-center gap-3">
+        <input type="checkbox" {% if user.posting_schedule.get('8am') %}checked{% endif %} class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-purple-600 focus:ring-purple-500">
+        <span>8:00 AM (Morning commute)</span>
+      </label>
+      <label class="flex items-center gap-3">
+        <input type="checkbox" {% if user.posting_schedule.get('1pm') %}checked{% endif %} class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-purple-600 focus:ring-purple-500">
+        <span>1:00 PM (Lunch break)</span>
+      </label>
+      <label class="flex items-center gap-3">
+        <input type="checkbox" {% if user.posting_schedule.get('6pm') %}checked{% endif %} class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-purple-600 focus:ring-purple-500">
+        <span>6:00 PM (After work)</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- CTA Strategy -->
+  <div class="card rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">Call-to-Action Strategy</h2>
+    <p class="text-sm text-gray-400 mb-4">Current: <span class="text-purple-400 font-semibold">{{ user.cta_strategy.title() }}</span> ({{ user.ctas_per_week }} CTAs/week)</p>
+
+    <div class="space-y-3">
+      {% for strategy_name, strategy in strategies.items() %}
+      <div class="bg-gray-800 border {% if strategy_name == user.cta_strategy %}border-purple-500{% else %}border-gray-700{% endif %} rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-semibold">{{ strategy_name.title() }}</span>
+          <span class="text-sm text-purple-400">{{ strategy.recommended_ctas }}/week</span>
+        </div>
+        <p class="text-sm text-gray-400">{{ strategy.strategy_description }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ strategy.cta_rate|round(1) }}% of posts</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Save Button -->
+  <button class="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition">
+    Save Changes
+  </button>
+</main>
+
+<script>
+let currentQRData = null;
+
+// Load real analytics on page load
+async function loadAnalytics() {
+  try {
+    const response = await fetch('/qr/stats/{{ user.id }}');
+    const stats = await response.json();
+    
+    // Update stats display
+    const statsContainer = document.getElementById('reviewStats');
+    if (stats.total_scans > 0 || stats.total_reviews > 0) {
+      statsContainer.innerHTML = `
+        <div class="font-semibold text-green-200 mb-2">✅ Your Stats:</div>
+        <div class="text-sm text-green-300 space-y-1">
+          <div class="flex justify-between">
+            <span>QR Scans:</span>
+            <span class="font-bold">${stats.total_scans}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Reviews Submitted:</span>
+            <span class="font-bold">${stats.total_reviews}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Conversion Rate:</span>
+            <span class="font-bold">${stats.conversion_rate}%</span>
+          </div>
+          ${stats.average_rating ? `
+          <div class="flex justify-between pt-2 border-t border-green-700">
+            <span>Average Rating:</span>
+            <span class="font-bold">⭐ ${stats.average_rating}</span>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      statsContainer.classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Error loading analytics:', error);
+  }
+}
+
+// Generate QR Code
+document.getElementById('generateQR').addEventListener('click', async () => {
+  try {
+    const response = await fetch('/qr/printable/{{ user.id }}?business_name={{ user.business_name|urlencode }}');
+    const data = await response.json();
+    currentQRData = data;
+
+    // Display QR code
+    document.getElementById('qrCodeContainer').innerHTML = `
+      <img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code" class="mx-auto mb-2" style="max-width: 200px;">
+      <div class="text-xs text-gray-400 mt-2">Scan to leave a verified review!</div>
+    `;
+
+    // Show download button
+    document.getElementById('downloadQR').classList.remove('hidden');
+    document.getElementById('downloadStickers').classList.remove('hidden');   
+
+    document.getElementById('reviewStats').classList.remove('hidden');
+  } catch (error) {
+    alert('Error generating QR code');
+  }
+});
+
+// Download QR Code
+document.getElementById('downloadQR').addEventListener('click', () => {
+  if (!currentQRData) return;
+
+  const link = document.createElement('a');
+  link.href = 'data:image/png;base64,' + currentQRData.qr_code_base64;
+  link.download = 'vibepilot-qr-code.png';
+  link.click();
+});
+
+// Download Sticker Sheet
+document.getElementById('downloadStickers').addEventListener('click', () => {
+  window.location.href = '/qr/sticker-sheet/{{ user.id }}?business_name={{ user.business_name|urlencode }}';
+});
+
+
+// Generate One-Time Review Link
+document.getElementById('generateLink').addEventListener('click', async () => {
+  const jobDesc = document.getElementById('jobDescription').value || 'Recent job';
+
+  try {
+    const response = await fetch('/qr/generate/{{ user.id }}?job_id=' + encodeURIComponent(jobDesc));
+    const data = await response.json();
+
+    document.getElementById('generatedLink').value = data.url;
+    document.getElementById('generatedLinkContainer').classList.remove('hidden');
+  } catch (error) {
+    alert('Error generating link');
+  }
+});
+
+// Copy Link
+document.getElementById('copyLink').addEventListener('click', () => {
+  const linkInput = document.getElementById('generatedLink');
+  linkInput.select();
+  document.execCommand('copy');
+
+  const btn = document.getElementById('copyLink');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+});
+
+// Load analytics when page loads
+loadAnalytics();
+
+// Reload analytics every 30 seconds
+setInterval(loadAnalytics, 30000);
+
+// ALSO reload when user comes back to the page (after submitting review)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    loadAnalytics();
+  }
+});
+
+// Force reload on page focus
+window.addEventListener('focus', () => {
+  loadAnalytics();
+});
+</script>
+
+</body>
+</html>

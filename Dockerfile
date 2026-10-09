@@ -1,0 +1,29 @@
+# Production image for the VibePilot API (apps/api).
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY apps/api/requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY apps/api/ /app/
+COPY apps/static/ /app/static/
+# Training corpus is read from /opt/vibepilot/content by the poster modules.
+COPY content/ /opt/vibepilot/content/
+
+RUN useradd --system --create-home vibepilot && \
+    mkdir -p /app/post_queue /app/logs /app/generated_images && \
+    chown -R vibepilot:vibepilot /app
+USER vibepilot
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

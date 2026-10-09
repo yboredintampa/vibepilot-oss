@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html class="bg-gradient-to-br from-purple-950 via-black to-purple-950 text-purple-300 min-h-screen">
+<head>
+  <meta charset="UTF-8">
+  <title>VibePilot Command Center</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Courier New', monospace; }
+    .glow { text-shadow: 0 0 30px #a259ff, 0 0 60px #a259ff; animation: pulse 4s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+    .card { background: rgba(80, 0, 120, 0.5); border: 2px solid #a259ff; box-shadow: 0 0 40px rgba(162, 89, 255, 0.5); }
+    .big { font-size: 5rem; font-weight: 900; }
+    .green { color: #22c55e; }
+    .red { color: #ef4444; }
+  </style>
+</head>
+<body class="p-8">
+  <h1 class="text-7xl font-bold text-center glow mb-12">VIBE·PILOT COMMAND CENTER</h1>
+  <div id="data" hx-get="/command-center-json" hx-trigger="every 3s" hx-swap="innerHTML" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-w-7xl mx-auto">
+    <!-- Initial load — tiles will replace this -->
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">0</div><div class="text-2xl mt-4">TOTAL USERS</div></div>
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">0</div><div class="text-2xl mt-4">ACTIVE SUBS</div></div>
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">$0</div><div class="text-2xl mt-4">STRIPE LIFETIME</div></div>
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">300000</div><div class="text-2xl mt-4">TO 300K</div></div>
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">0</div><div class="text-2xl mt-4">ACRES READY</div></div>
+    <div class="card p-10 rounded-3xl text-center"><div class="big glow">~10000000 days</div><div class="text-2xl mt-4">EST. DAYS LEFT</div></div>
+    <div class="card p-10 rounded-3xl text-center">
+      <div class="text-2xl mt-4">SUB TIERS</div>
+      <div class="text-xl mt-2">
+        Starter: 0<br>
+        Pro: 0<br>
+        Beast: 0
+      </div>
+    </div>
+    <div class="card p-10 rounded-3xl text-center">
+      <div class="text-2xl mt-4">API HEALTH</div>
+      <div class="text-xl mt-2">
+        Stripe: <span class="green">●</span><br>
+        Postgres: <span class="red">●</span><br>
+        Storj: <span class="green">●</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      if (evt.detail.target.id === 'data') {
+        evt.detail.target.innerHTML = evt.detail.xhr.responseText; // keep tiles
+      }
+    });
+  </script>
+</body>
+</html>

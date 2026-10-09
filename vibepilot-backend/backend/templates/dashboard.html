@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ user.business_name }} - VibePilot Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .gradient-purple { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+    .card { 
+      background: rgba(30, 41, 59, 0.6); 
+      border: 1px solid rgba(148, 163, 184, 0.1); 
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .card:hover { 
+      border-color: rgba(168, 85, 247, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(168, 85, 247, 0.1);
+    }
+    .metric-tile {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .metric-tile:hover {
+      transform: scale(1.02);
+    }
+    .metric-tile::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(168, 85, 247, 0.1), transparent);
+      transform: rotate(45deg);
+      transition: all 0.6s;
+    }
+    .metric-tile:hover::before {
+      left: 100%;
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .count-up {
+      animation: countUp 0.6s ease-out;
+    }
+    .post-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .post-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(168, 85, 247, 0.15);
+    }
+    .insight-card {
+      animation: slideIn 0.5s ease-out forwards;
+      opacity: 0;
+    }
+    .insight-card:nth-child(1) { animation-delay: 0.1s; }
+    .insight-card:nth-child(2) { animation-delay: 0.2s; }
+    .insight-card:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body class="text-gray-100 font-sans">
+
+<!-- Header -->
+<header class="gradient-purple shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">🟣 VibePilot</h1>
+      <p class="text-sm text-purple-100">{{ user.business_name }}</p>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/dashboard" class="hover:text-white font-semibold transition">Overview</a>
+      <a href="/dashboard/posts" class="hover:text-white transition">Content</a>
+      <a href="/dashboard/analytics" class="hover:text-white transition">Analytics</a>
+      <a href="/dashboard/settings" class="hover:text-white transition">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+  <!-- Stats Grid with Sparklines -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+    <!-- This Week Posts -->
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">THIS WEEK</div>
+      <div class="text-3xl font-bold text-purple-400 count-up" data-target="{{ analytics.this_week.posts }}">0</div>
+      <div class="text-sm text-gray-300 mt-1">posts</div>
+      <div class="mt-4 text-xs">
+        <span class="text-green-400">+{{ engagement_growth }}%</span> engagement
+      </div>
+      <div class="h-12 mt-2">
+        <canvas id="sparkline1"></canvas>
+      </div>
+    </div>
+
+    <!-- Engagement -->
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">ENGAGEMENT</div>
+      <div class="text-3xl font-bold text-blue-400 count-up" data-target="{{ analytics.this_week.likes + analytics.this_week.comments }}">0</div>
+      <div class="text-sm text-gray-300 mt-1">likes + comments</div>
+      <div class="mt-4 text-xs text-gray-400">
+        {{ analytics.this_week.dms }} DMs
+      </div>
+      <div class="h-12 mt-2">
+        <canvas id="sparkline2"></canvas>
+      </div>
+    </div>
+
+    <!-- Revenue -->
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">REVENUE</div>
+      <div class="text-3xl font-bold text-green-400">
+        $<span class="count-up" data-target="{{ analytics.this_week.revenue|int }}">0</span>
+      </div>
+      <div class="text-sm text-gray-300 mt-1">from Instagram</div>
+      <div class="mt-4 text-xs">
+        <span class="text-green-400">+{{ revenue_growth }}%</span> vs last week
+      </div>
+      <div class="h-12 mt-2">
+        <canvas id="sparkline3"></canvas>
+      </div>
+    </div>
+
+    <!-- Reputation -->
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">REPUTATION</div>
+      <div class="text-3xl font-bold text-yellow-400">⭐ {{ analytics.reputation.score }}</div>
+      <div class="text-sm text-gray-300 mt-1">
+        <span class="count-up" data-target="{{ analytics.reputation.total_reviews }}">0</span> reviews
+      </div>
+      <div class="mt-4 text-xs text-gray-400">
+        #{{ analytics.reputation.rank }} in {{ analytics.reputation.location }}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Today's Queue -->
+  <div class="card rounded-2xl p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          📅 Today's Content Queue
+        </h2>
+        <p class="text-sm text-gray-400 mt-1">{{ todays_posts|length }} posts scheduled</p>
+      </div>
+      <button class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition text-white text-sm font-semibold">
+        + Generate More
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      {% for post in todays_posts %}
+      <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition post-card">
+        <!-- Image -->
+        <div class="aspect-video bg-gray-900 relative">
+          <img src="{{ post.image_url }}" alt="Post preview" class="w-full h-full object-cover">
+          <!-- Time Badge -->
+          <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
+            {{ post.scheduled_time[11:16] }}
+          </div>
+        </div>
+
+        <!-- Caption -->
+        <div class="p-4">
+          <p class="text-sm text-gray-300 line-clamp-3 mb-3">{{ post.caption }}</p>
+
+          <!-- Tags -->
+          <div class="flex gap-2 mb-3">
+            <span class="text-xs px-2 py-1 rounded bg-blue-900 text-blue-200">{{ post.tone }}</span>
+            {% if post.has_cta %}
+            <span class="text-xs px-2 py-1 rounded bg-green-900 text-green-200">CTA</span>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-2">
+            <button class="flex-1 text-xs py-2 rounded bg-purple-600 hover:bg-purple-700 text-white font-semibold transition">
+              ✓ Approve
+            </button>
+            <button class="flex-1 text-xs py-2 rounded bg-gray-700 hover:bg-gray-600 text-white transition">
+              Edit
+            </button>
+            <button class="text-xs px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white transition">
+              🔄
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <!-- Top Post & Insights -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Top Post -->
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-4">🏆 Top Post This Week</h2>
+      <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <p class="text-sm text-gray-300 mb-4">{{ analytics.top_post.caption }}</p>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-2xl font-bold text-blue-400 count-up" data-target="{{ analytics.top_post.likes }}">0</div>
+            <div class="text-xs text-gray-400">likes</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-green-400 count-up" data-target="{{ analytics.top_post.bookings }}">0</div>
+            <div class="text-xs text-gray-400">bookings</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-purple-400">
+              $<span class="count-up" data-target="{{ analytics.top_post.revenue|int }}">0</span>
+            </div>
+            <div class="text-xs text-gray-400">revenue</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-4">💡 Quick Insights</h2>
+      <div class="space-y-3">
+        <div class="bg-purple-900 bg-opacity-30 border border-purple-700 rounded-lg p-3 insight-card">
+          <div class="text-sm text-purple-200">
+            ✨ Your 8am posts get 40% more engagement than 6pm posts
+          </div>
+        </div>
+        <div class="bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-3 insight-card">
+          <div class="text-sm text-green-200">
+            📈 Before/after posts convert 3x better - post 2 more this week
+          </div>
+        </div>
+        <div class="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-3 insight-card">
+          <div class="text-sm text-blue-200">
+            🎯 You're on track for $6,720 revenue this month from social
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+// Count-up animation
+document.addEventListener('DOMContentLoaded', function() {
+  const counters = document.querySelectorAll('.count-up');
+  
+  counters.forEach(counter => {
+    const target = parseInt(counter.getAttribute('data-target'));
+    const duration = 1500;
+    const increment = target / (duration / 16);
+    let current = 0;
+    
+    const updateCounter = () => {
+      current += increment;
+      if (current < target) {
+        counter.textContent = Math.floor(current);
+        requestAnimationFrame(updateCounter);
+      } else {
+        counter.textContent = target;
+      }
+    };
+    
+    setTimeout(() => updateCounter(), 200);
+  });
+
+  // Sparkline charts
+  const sparklineConfig = {
+    type: 'line',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: false },
+        y: { display: false }
+      },
+      elements: {
+        point: { radius: 0 },
+        line: { tension: 0.4 }
+      }
+    }
+  };
+
+  // Sparkline 1 - Posts trend
+  new Chart(document.getElementById('sparkline1'), {
+    ...sparklineConfig,
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        data: [3, 3, 3, 3, 3, 3, 3],
+        borderColor: 'rgb(168, 85, 247)',
+        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+        fill: true,
+        borderWidth: 2
+      }]
+    }
+  });
+
+  // Sparkline 2 - Engagement trend
+  new Chart(document.getElementById('sparkline2'), {
+    ...sparklineConfig,
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        data: [120, 145, 132, 158, 142, 167, 189],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        borderWidth: 2
+      }]
+    }
+  });
+
+  // Sparkline 3 - Revenue trend
+  new Chart(document.getElementById('sparkline3'), {
+    ...sparklineConfig,
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        data: [180, 220, 190, 280, 240, 310, 350],
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        fill: true,
+        borderWidth: 2
+      }]
+    }
+  });
+});
+</script>
+
+</body>
+</html>

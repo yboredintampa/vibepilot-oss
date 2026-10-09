@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - VibePilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .gradient-purple { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+    .card { 
+      background: rgba(30, 41, 59, 0.6); 
+      border: 1px solid rgba(148, 163, 184, 0.1); 
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .card:hover { 
+      border-color: rgba(168, 85, 247, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(168, 85, 247, 0.1);
+    }
+    .metric-tile {
+      transition: all 0.3s ease;
+    }
+    .metric-tile:hover {
+      transform: scale(1.02);
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .count-up {
+      animation: countUp 0.6s ease-out;
+    }
+  </style>
+</head>
+<body class="text-gray-100 font-sans">
+
+<!-- Header -->
+<header class="gradient-purple shadow-lg">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">🟣 VibePilot</h1>
+      <p class="text-sm text-purple-100">{{ user.business_name }}</p>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/dashboard" class="hover:text-white transition">Overview</a>
+      <a href="/dashboard/posts" class="hover:text-white transition">Content</a>
+      <a href="/dashboard/analytics" class="hover:text-white font-semibold transition">Analytics</a>
+      <a href="/dashboard/settings" class="hover:text-white transition">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">📊 Analytics Dashboard</h1>
+    <p class="text-gray-400">Performance metrics and insights</p>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">POSTS</div>
+      <div class="text-3xl font-bold count-up" data-target="{{ analytics.this_week.posts }}">0</div>
+      <div class="text-xs text-gray-400 mt-1">this week</div>
+    </div>
+    
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">ENGAGEMENT</div>
+      <div class="text-3xl font-bold text-blue-400 count-up" data-target="{{ analytics.this_week.likes + analytics.this_week.comments }}">0</div>
+      <div class="text-xs text-green-400 mt-1">
+        +{{ ((analytics.this_week.likes + analytics.this_week.comments - analytics.last_week.likes - analytics.last_week.comments) / (analytics.last_week.likes + analytics.last_week.comments) * 100)|round(1) }}%
+      </div>
+    </div>
+    
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">BOOKINGS</div>
+      <div class="text-3xl font-bold text-purple-400 count-up" data-target="{{ analytics.this_week.bookings }}">0</div>
+      <div class="text-xs text-gray-400 mt-1">
+        vs {{ analytics.last_week.bookings }} last week
+      </div>
+    </div>
+    
+    <div class="card rounded-2xl p-6 metric-tile">
+      <div class="text-sm text-gray-400 mb-2">REVENUE</div>
+      <div class="text-3xl font-bold text-green-400">
+        $<span class="count-up" data-target="{{ analytics.this_week.revenue|int }}">0</span>
+      </div>
+      <div class="text-xs text-green-400 mt-1">
+        +{{ ((analytics.this_week.revenue - analytics.last_week.revenue) / analytics.last_week.revenue * 100)|round(1) }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- Engagement Over Time Chart -->
+  <div class="card rounded-2xl p-6 mb-8">
+    <h2 class="text-xl font-bold mb-6">📈 Engagement Trend (Last 7 Days)</h2>
+    <div class="h-64">
+      <canvas id="engagementChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Weekly Comparison Chart -->
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-6">📊 This Week vs Last Week</h2>
+      <div class="h-64">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Engagement Breakdown -->
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-4">💬 Engagement Breakdown</h2>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Likes</span>
+          <div class="flex items-center gap-3">
+            <div class="w-32 bg-gray-800 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full" style="width: {{ (analytics.this_week.likes / (analytics.this_week.likes + analytics.this_week.comments + analytics.this_week.shares + analytics.this_week.saves) * 100)|round(0) }}%"></div>
+            </div>
+            <span class="font-semibold w-12 text-right">{{ analytics.this_week.likes }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Comments</span>
+          <div class="flex items-center gap-3">
+            <div class="w-32 bg-gray-800 rounded-full h-2">
+              <div class="bg-green-500 h-2 rounded-full" style="width: {{ (analytics.this_week.comments / (analytics.this_week.likes + analytics.this_week.comments + analytics.this_week.shares + analytics.this_week.saves) * 100)|round(0) }}%"></div>
+            </div>
+            <span class="font-semibold w-12 text-right">{{ analytics.this_week.comments }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Shares</span>
+          <div class="flex items-center gap-3">
+            <div class="w-32 bg-gray-800 rounded-full h-2">
+              <div class="bg-purple-500 h-2 rounded-full" style="width: {{ (analytics.this_week.shares / (analytics.this_week.likes + analytics.this_week.comments + analytics.this_week.shares + analytics.this_week.saves) * 100)|round(0) }}%"></div>
+            </div>
+            <span class="font-semibold w-12 text-right">{{ analytics.this_week.shares }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Saves</span>
+          <div class="flex items-center gap-3">
+            <div class="w-32 bg-gray-800 rounded-full h-2">
+              <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ (analytics.this_week.saves / (analytics.this_week.likes + analytics.this_week.comments + analytics.this_week.shares + analytics.this_week.saves) * 100)|round(0) }}%"></div>
+            </div>
+            <span class="font-semibold w-12 text-right">{{ analytics.this_week.saves }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center pt-4 border-t border-gray-700">
+          <span class="text-gray-400">DMs</span>
+          <span class="font-semibold text-purple-400">{{ analytics.this_week.dms }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Post & Reputation -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-4">🏆 Top Performing Post</h2>
+      <p class="text-sm text-gray-300 mb-4">{{ analytics.top_post.caption }}</p>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div class="text-2xl font-bold text-blue-400 count-up" data-target="{{ analytics.top_post.likes }}">0</div>
+          <div class="text-xs text-gray-400">likes</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-green-400 count-up" data-target="{{ analytics.top_post.bookings }}">0</div>
+          <div class="text-xs text-gray-400">bookings</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-purple-400">
+            $<span class="count-up" data-target="{{ analytics.top_post.revenue|int }}">0</span>
+          </div>
+          <div class="text-xs text-gray-400">revenue</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card rounded-2xl p-6">
+      <h2 class="text-xl font-bold mb-4">⭐ Reputation Score</h2>
+      <div class="flex items-center gap-8">
+        <div class="text-center">
+          <div class="text-5xl font-bold text-yellow-400">{{ analytics.reputation.score }}</div>
+          <div class="text-sm text-gray-400 mt-2">Average Rating</div>
+        </div>
+        <div class="flex-1 space-y-2">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Total Reviews</span>
+            <span class="font-semibold count-up" data-target="{{ analytics.reputation.total_reviews }}">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Rank in {{ analytics.reputation.location }}</span>
+            <span class="font-semibold">#{{ analytics.reputation.rank }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// Count-up animation
+document.addEventListener('DOMContentLoaded', function() {
+  const counters = document.querySelectorAll('.count-up');
+  
+  counters.forEach(counter => {
+    const target = parseInt(counter.getAttribute('data-target'));
+    const duration = 1500;
+    const increment = target / (duration / 16);
+    let current = 0;
+    
+    const updateCounter = () => {
+      current += increment;
+      if (current < target) {
+        counter.textContent = Math.floor(current);
+        requestAnimationFrame(updateCounter);
+      } else {
+        counter.textContent = target;
+      }
+    };
+    
+    updateCounter();
+  });
+
+  // Engagement Trend Chart
+  const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+  new Chart(engagementCtx, {
+    type: 'line',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Likes',
+        data: [120, 145, 132, 158, 142, 167, 189],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true
+      }, {
+        label: 'Comments',
+        data: [12, 18, 14, 22, 19, 25, 28],
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: 'rgb(156, 163, 175)' }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: 'rgb(156, 163, 175)' }
+        },
+        x: {
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: 'rgb(156, 163, 175)' }
+        }
+      }
+    }
+  });
+
+  // Weekly Comparison Chart
+  const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+  new Chart(weeklyCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Posts', 'Engagement', 'Bookings', 'Revenue'],
+      datasets: [{
+        label: 'This Week',
+        data: [{{ analytics.this_week.posts }}, {{ analytics.this_week.likes + analytics.this_week.comments }}, {{ analytics.this_week.bookings }}, {{ analytics.this_week.revenue }}],
+        backgroundColor: 'rgba(168, 85, 247, 0.8)',
+      }, {
+        label: 'Last Week',
+        data: [{{ analytics.last_week.posts }}, {{ analytics.last_week.likes + analytics.last_week.comments }}, {{ analytics.last_week.bookings }}, {{ analytics.last_week.revenue }}],
+        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: 'rgb(156, 163, 175)' }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: 'rgb(156, 163, 175)' }
+        },
+        x: {
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: 'rgb(156, 163, 175)' }
+        }
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>

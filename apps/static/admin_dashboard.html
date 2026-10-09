@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VibePilot Admin</title>
+  <style>
+    body {
+      background: radial-gradient(circle at top left, #3b0764 0%, #020617 45%, #050816 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      color: #e4e4e7;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #a855f7;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 1.4rem;
+    }
+    .header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #4c1d95;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-sub {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .pill-accent {
+      background: #1e293b;
+      color: #c4b5fd;
+    }
+    .pill-status {
+      margin-left: 0.4rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+      gap: 1.5rem;
+      padding: 1.5rem 2rem 2rem;
+    }
+    .panel {
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.85);
+      padding: 1.25rem 1.5rem 1.5rem;
+    }
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .panel-sub {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      margin-bottom: 0.75rem;
+    }
+    .field {
+      margin-bottom: 0.65rem;
+      font-size: 0.8rem;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 0.2rem;
+      opacity: 0.9;
+    }
+    .field input[type="time"],
+    .field input[type="number"] {
+      width: 110px;
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #4f46e5;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.8rem;
+      color: #e5e7eb;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: #111827;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #a855f7;
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.35);
+      cursor: pointer;
+    }
+    .btn {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #f9fafb;
+      border: none;
+      border-radius: 999px;
+      padding: 0.4rem 0.95rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.55);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(129, 140, 248, 0.75);
+    }
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      box-shadow: none;
+    }
+    .btn-approve {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      box-shadow: 0 10px 25px rgba(22, 163, 74, 0.5);
+    }
+    .btn-delete {
+      background: linear-gradient(135deg, #b91c1c, #ef4444);
+      box-shadow: 0 10px 25px rgba(185, 28, 28, 0.65);
+    }
+    .queue-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    .queue-summary span strong {
+      color: #a5b4fc;
+    }
+    .post-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+    }
+    .post-card {
+      background: radial-gradient(circle at top, #111827 0%, #020617 58%, #000 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(75, 85, 99, 0.7);
+      padding: 0.6rem 0.7rem 0.9rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .post-card.deleted {
+      opacity: 0.45;
+      filter: grayscale(0.7);
+    }
+    .post-header-badges {
+      position: absolute;
+      top: 0.55rem;
+      left: 0.6rem;
+      right: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .post-image-wrap {
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 0.45rem;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+    }
+    .post-image-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .post-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-bottom: 0.25rem;
+    }
+    textarea {
+      max-height: 120px;
+      overflow-y: auto;
+      width: 100%;
+      min-height: 5.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      padding: 0.5rem 0.6rem;
+      font-size: 0.78rem;
+      resize: vertical;
+      margin: 0.35rem 0 0.5rem;
+    }
+    .sliders-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.72rem;
+    }
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.1rem;
+    }
+    .translate-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 0.55rem;
+      font-size: 0.75rem;
+    }
+    select.translate-lang {
+      flex: 1;
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid rgba(129, 140, 248, 0.7);
+      color: #e5e7eb;
+      padding: 0.28rem 0.7rem;
+      font-size: 0.75rem;
+    }
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 999px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.78rem;
+      border: 1px solid rgba(129, 140, 248, 0.7);
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      z-index: 40;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>VibePilot Admin</h1>
+      <div class="header-sub">Local-only review queue. Nothing leaves this box unless you approve it.</div>
+    </div>
+    <div style="text-align:right;font-size:0.8rem;opacity:0.85;">
+      <div><strong>Tenant:</strong> demo.env</div>
+      <div><strong>Queue:</strong> <span id="queue-count">0</span> posts</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- AI Learning & Analytics Panel -->
+    <div class="panel" style="grid-column: 1 / -1; margin-top: 1rem;">
+      <div class="panel-title">🤖 AI Learning & Analytics</div>
+      <div class="panel-sub">Real-time performance metrics</div>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.65rem; opacity: 0.8; margin-bottom: 0.25rem;">Training Examples</div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #a855f7;" id="aiTotal">-</div>
+        </div>
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.65rem; opacity: 0.8; margin-bottom: 0.25rem;">High Performers</div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #22c55e;" id="aiHigh">-</div>
+        </div>
+        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.65rem; opacity: 0.8; margin-bottom: 0.25rem;">Avg Rating</div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #3b82f6;" id="aiAvg">-</div>
+        </div>
+        <div style="background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.65rem; opacity: 0.8; margin-bottom: 0.25rem;">Learning Status</div>
+          <div style="font-size: 0.9rem; font-weight: 600; color: #f97316;" id="aiStatus">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEFT PANEL: Schedule & brand voice -->
+    <div class="panel">
+      <div class="panel-title">Schedule & Brand Voice</div>
+      <div class="panel-sub">All preferences are stored locally for your own models only.</div>
+
+      <div class="field">
+        <label>Post 1 time</label>
+        <input id="time-0" type="time" value="08:00">
+      </div>
+      <div class="field">
+        <label>Post 2 time</label>
+        <input id="time-1" type="time" value="13:00">
+      </div>
+      <div class="field">
+        <label>Post 3 time</label>
+        <input id="time-2" type="time" value="18:00">
+      </div>
+      <div class="field">
+        <label>Preview generation time (next-day)</label>
+        <input id="preview-generation-time" type="time" value="18:00">
+      </div>
+      <div class="field">
+        <label>Blog posts per week</label>
+        <input id="blog-posts-per-week" type="number" min="0" max="10" value="3">
+      </div>
+
+      <div class="field">
+        <label>Brand voice dial (0–100)</label>
+        <div class="slider-row">
+          <div class="slider-label">
+            <span>0 = ultra-neutral</span>
+            <span>100 = fully on-brand</span>
+          </div>
+          <input type="range" min="0" max="100" value="70" id="brand-voice-slider">
+        </div>
+      </div>
+
+      <button class="btn" id="save-schedule-btn" style="margin-top:0.4rem;">Save schedule & brand voice</button>
+
+      <hr style="border:none;border-top:1px dashed rgba(148,163,184,0.6);margin:1rem 0;">
+
+    <!-- QR Code Generator -->
+    <div class="panel">
+      <div class="panel-title">📱 QR Generator</div>
+      <div class="panel-sub">Generate review QR codes</div>
+      
+      <div class="field">
+        <label>Business Name</label>
+        <input type="text" id="qrBiz" value="Sunny Side Pool Co." style="width:100%;padding:0.5rem;border-radius:8px;border:1px solid #4b5563;background:rgba(15,23,42,0.85);color:#e5e7eb;font-size:0.85rem;">
+      </div>
+      
+      <div class="field">
+        <label>User ID</label>
+        <input type="text" id="qrUser" value="demo_001" style="width:100%;padding:0.5rem;border-radius:8px;border:1px solid #4b5563;background:rgba(15,23,42,0.85);color:#e5e7eb;font-size:0.85rem;">
+      </div>
+      
+      <button onclick="generateQR()" class="btn" style="width:100%;margin-top:0.75rem;">🔮 Generate QR</button>
+      
+      <div id="qrResult" style="display:none;margin-top:1rem;">
+        <div style="background:white;padding:1rem;border-radius:8px;text-align:center;margin-bottom:0.75rem;">
+          <img id="qrImage" style="max-width:100%;">
+        </div>
+        <div style="font-size:0.7rem;margin-bottom:0.75rem;word-break:break-all;">
+          <a id="qrLink" href="" target="_blank" style="color:#a855f7;"></a>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button onclick="downloadQR()" class="btn btn-ghost" style="flex:1;">💾 PNG</button>
+          <button onclick="downloadPDF()" class="btn btn-ghost" style="flex:1;">📄 PDF</button>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel-title" style="margin-bottom:0.35rem;">Quick actions</div>
+      <div style="display:flex;flex-direction:column;gap:0.45rem;">
+        <button class="btn btn-ghost" id="refresh-queue-btn">Refresh queue</button>
+        <button class="btn btn-ghost" id="preview-scheduler-btn">Generate post</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Posts -->
+    <div class="panel">
+      <div class="queue-summary">
+        <span>Showing <strong><span id="queue-count-inline">0</span></strong> posts from local queue</span>
+        <span style="font-size:0.72rem;opacity:0.7;">Approve = ready to post · Delete = move to local _deleted/</span>
+      </div>
+
+      <div id="queue-grid" class="post-grid"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "flex";
+  setTimeout(() => { t.style.display = "none"; }, 2600);
+}
+
+function updateQueueCount(count) {
+  const el1 = document.getElementById("queue-count");
+  const el2 = document.getElementById("queue-count-inline");
+  if (el1) el1.textContent = count;
+  if (el2) el2.textContent = count;
+}
+
+function escapeHtml(text) {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function cardHtml(item) {
+  const caption = escapeHtml(item.caption || "");
+  const created = item.created_at ? item.created_at.slice(0, 19).replace("T", " ") : "—";
+  const deletedClass = item.status === "deleted" ? " deleted" : "";
+  const statusLabel = (item.status || "pending_review").replace(/_/g, " ").toUpperCase();
+  const imgPart = item.image_url
+    ? `<img src="${item.image_url}" alt="Generated image for ${item.category_label}">`
+    : `<div style="height:160px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;opacity:0.65;">No image</div>`;
+
+  return `
+    <div class="post-card${deletedClass}" data-id="${item.id}" data-file="${item.file_name}">
+      <div class="post-header-badges">
+        <div class="pill pill-accent" style="background:${item.category_color};color:#020617;">${item.category_label}</div>
+        <div class="pill pill-status" style="background:${item.status_color};">${statusLabel}</div>
+      </div>
+
+      <div class="post-image-wrap">
+        ${imgPart}
+      </div>
+
+      <div class="post-meta">
+        <span style="max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">ID: ${item.id}</span>
+        <span>${created}</span>
+      </div>
+
+      <textarea class="caption-input">${caption}</textarea>
+
+      <div class="sliders-row">
+        <div>
+          <div class="slider-label">
+            <span>Caption voice (0–100)</span>
+            <span class="voice-value">70</span>
+          </div>
+          <input type="range" min="0" max="100" value="70" class="voice-slider">
+        </div>
+        <div>
+          <div class="slider-label">
+            <span>Image accuracy (0–100)</span>
+            <span class="image-value">80</span>
+          </div>
+          <input type="range" min="0" max="100" value="80" class="image-slider">
+        </div>
+      </div>
+
+      <div class="translate-row">
+        <label style="opacity:0.8;">Translate to:</label>
+        <select class="translate-lang">
+          <option value="">Select…</option>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="zh">Chinese</option>
+          <option value="hi">Hindi</option>
+          <option value="ar">Arabic</option>
+          <option value="fr">French</option>
+          <option value="ru">Russian</option>
+          <option value="pt">Portuguese</option>
+          <option value="bn">Bengali</option>
+          <option value="de">German</option>
+          <option value="ja">Japanese</option>
+          <option value="pa">Punjabi</option>
+        </select>
+        <button class="btn btn-ghost translate-btn" type="button">Translate (local only)</button>
+      </div>
+
+      <div class="post-actions">
+        <button class="btn btn-approve approve-btn" type="button">Approve</button>
+        <button class="btn btn-delete delete-btn" type="button">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+async function loadSchedulerConfig() {
+  try {
+    const resp = await fetch("/admin/scheduler/config", { credentials: "same-origin" });
+    if (!resp.ok) return;
+    const cfg = await resp.json();
+    const times = cfg.post_times || [];
+    const t0 = document.getElementById("time-0");
+    const t1 = document.getElementById("time-1");
+    const t2 = document.getElementById("time-2");
+    if (t0 && times[0]) t0.value = times[0];
+    if (t1 && times[1]) t1.value = times[1];
+    if (t2 && times[2]) t2.value = times[2];
+    const prev = document.getElementById("preview-generation-time");
+    if (prev && cfg.preview_generation_time) prev.value = cfg.preview_generation_time;
+    const blog = document.getElementById("blog-posts-per-week");
+    if (blog && typeof cfg.blog_posts_per_week !== "undefined") blog.value = cfg.blog_posts_per_week;
+    const voice = document.getElementById("brand-voice-slider");
+    if (voice && typeof cfg.brand_voice !== "undefined") voice.value = cfg.brand_voice;
+  } catch (err) {
+    console.error("Failed to load scheduler config", err);
+  }
+}
+
+async function saveSchedulerConfig() {
+  const t0 = document.getElementById("time-0").value || "08:00";
+  const t1 = document.getElementById("time-1").value || "13:00";
+  const t2 = document.getElementById("time-2").value || "18:00";
+  const prev = document.getElementById("preview-generation-time").value || "18:00";
+  const blog = parseInt(document.getElementById("blog-posts-per-week").value || "3", 10);
+  const voice = parseInt(document.getElementById("brand-voice-slider").value || "70", 10);
+
+  try {
+    const resp = await fetch("/admin/scheduler/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        post_times: [t0, t1, t2],
+        preview_generation_time: prev,
+        blog_posts_per_week: blog,
+        brand_voice: voice
+      })
+    });
+    if (!resp.ok) {
+      showToast("Failed to save schedule");
+      return;
+    }
+    showToast("Schedule & brand voice saved");
+  } catch (err) {
+    showToast("Error saving schedule");
+  }
+}
+
+async function loadQueue() {
+  const grid = document.getElementById("queue-grid");
+  if (!grid) return;
+  grid.innerHTML = "<div style='font-size:0.8rem;opacity:0.7;'>Loading queue...</div>";
+  try {
+    const resp = await fetch("/admin/queue/all", { credentials: "same-origin" });
+    if (!resp.ok) {
+      grid.innerHTML = "<div style='font-size:0.8rem;opacity:0.7;'>Failed to load queue.</div>";
+      return;
+    }
+    const data = await resp.json();
+    const items = data.items || [];
+    updateQueueCount(items.length);
+    grid.innerHTML = items.map(cardHtml).join("");
+  } catch (err) {
+    grid.innerHTML = "<div style='font-size:0.8rem;opacity:0.7;'>Error loading queue.</div>";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadSchedulerConfig();
+  loadQueue();
+
+  const saveBtn = document.getElementById("save-schedule-btn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      saveSchedulerConfig();
+    });
+  }
+
+  const refreshBtn = document.getElementById("refresh-queue-btn");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      loadQueue();
+    });
+  }
+
+  const previewBtn = document.getElementById("preview-scheduler-btn");
+  if (previewBtn) {
+    previewBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch("/admin/scheduler/force_run", { method: "POST" });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(data.message || "Generated new post!");
+          await loadQueue();
+        } else {
+          showToast("Failed: " + (data.error || "unknown"));
+        }
+      } catch (err) {
+        showToast("Error: " + err.message);
+      }
+    });
+  }
+
+  const grid = document.getElementById("queue-grid");
+
+  grid.addEventListener("input", (e) => {
+    const card = e.target.closest(".post-card");
+    if (!card) return;
+    if (e.target.classList.contains("voice-slider")) {
+      const label = card.querySelector(".voice-value");
+      if (label) label.textContent = e.target.value;
+    } else if (e.target.classList.contains("image-slider")) {
+      const label = card.querySelector(".image-value");
+      if (label) label.textContent = e.target.value;
+    }
+  });
+
+  grid.addEventListener("click", async (e) => {
+    const card = e.target.closest(".post-card");
+    if (!card) return;
+    const id = card.dataset.id;
+    const file = card.dataset.file;
+
+    if (e.target.classList.contains("translate-btn")) {
+      const langSelect = card.querySelector(".translate-lang");
+      const lang = langSelect.value;
+      const captionEl = card.querySelector(".caption-input");
+      if (!lang) {
+        alert("Please select a language first.");
+        return;
+      }
+      try {
+        const resp = await fetch(`/admin/item/${encodeURIComponent(id)}/translate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file_name: file,
+            target_lang: lang,
+            caption: captionEl.value
+          })
+        });
+        const res = await resp.json();
+        if (res.ok) {
+          captionEl.value = res.translated || captionEl.value;
+          showToast("Translated to " + (res.lang_label || lang.toUpperCase()) + " (local only)");
+        } else {
+          alert("Translation failed: " + (res.error || "unknown error"));
+        }
+      } catch (err) {
+        alert("Translation failed: " + err.message);
+      }
+    } else if (e.target.classList.contains("delete-btn")) {
+      if (!confirm("Delete this post from the queue?")) return;
+      const rating = prompt("Before we delete it, how on-target was this post (1–10)? (optional)");
+      const note = prompt("What felt off or needs improvement? (optional)");
+      try {
+        const resp = await fetch(`/admin/item/${encodeURIComponent(id)}/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file_name: file,
+            rating: rating,
+            note: note
+          })
+        });
+        const res = await resp.json();
+        if (res.ok) {
+          card.remove();
+          updateQueueCount(document.querySelectorAll(".post-card").length);
+          showToast("Deleted & feedback logged. Thank you.");
+        } else {
+          alert("Delete failed: " + (res.error || "unknown error"));
+        }
+      } catch (err) {
+        alert("Delete failed: " + err.message);
+      }
+    } else if (e.target.classList.contains("approve-btn")) {
+      const voiceSlider = card.querySelector(".voice-slider");
+      const imageSlider = card.querySelector(".image-slider");
+      const captionEl = card.querySelector(".caption-input");
+      try {
+        const resp = await fetch(`/admin/item/${encodeURIComponent(id)}/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file_name: file,
+            caption: captionEl.value,
+            voice_score: voiceSlider ? voiceSlider.value : null,
+            image_score: imageSlider ? imageSlider.value : null
+          })
+        });
+        const res = await resp.json();
+        if (res.ok) {
+          const statusPill = card.querySelector(".pill-status");
+          if (statusPill) {
+            statusPill.textContent = "APPROVED";
+            statusPill.style.background = "#22c55e";
+          }
+          showToast("Marked as approved (local only).");
+        } else {
+          alert("Approve failed: " + (res.error || "unknown error"));
+        }
+      } catch (err) {
+        alert("Approve failed: " + err.message);
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
+<script>
+let qrData = null;
+async function generateQR() {
+  const biz = document.getElementById('qrBiz').value.trim();
+  const user = document.getElementById('qrUser').value.trim();
+  if (!user) { alert('Please enter User ID'); return; }
+  try {
+    const res = await fetch(`/qr/printable/${user}?business_name=${encodeURIComponent(biz)}`);
+    qrData = await res.json();
+    if (qrData.qr_code_base64) {
+      document.getElementById('qrImage').src = `data:image/png;base64,${qrData.qr_code_base64}`;
+      document.getElementById('qrLink').href = qrData.url;
+      document.getElementById('qrLink').textContent = qrData.url;
+      document.getElementById('qrResult').style.display = 'block';
+    } else { alert('Failed to generate QR code'); }
+  } catch (error) { alert('Error: ' + error.message); }
+}
+function downloadQR() {
+  if (!qrData) return;
+  const a = document.createElement('a');
+  a.href = `data:image/png;base64,${qrData.qr_code_base64}`;
+  a.download = 'vibepilot-qr.png';
+  a.click();
+}
+async function downloadPDF() {
+  const biz = document.getElementById('qrBiz').value.trim();
+  const user = document.getElementById('qrUser').value.trim();
+  try {
+    const res = await fetch(`/qr/sticker-sheet/${user}?business_name=${encodeURIComponent(biz)}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vibepilot-stickers.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) { alert('Error: ' + error.message); }
+}
+</script>
+</body></html>
+<script>
+async function updateAnalytics() {
+  try {
+    const res = await fetch('/admin/learning-stats');
+    const stats = await res.json();
+    document.getElementById('aiTotal').textContent = stats.total_training_examples || 0;
+    document.getElementById('aiHigh').textContent = stats.high_performing_examples || 0;
+    document.getElementById('aiAvg').textContent = (stats.avg_post_rating || 0).toFixed(1);
+    document.getElementById('aiStatus').textContent = stats.learning_enabled ? '✅ ENABLED' : '⚠️ DISABLED';
+  } catch (e) {
+    console.error('Analytics error:', e);
+  }
+}
+updateAnalytics();
+setInterval(updateAnalytics, 30000);
+</script>

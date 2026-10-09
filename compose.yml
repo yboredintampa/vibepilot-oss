@@ -1,0 +1,57 @@
+# Docker Compose deployment for VibePilot.
+# All configuration comes from an env file (default: ./.env, see .env.example).
+# The app refuses to start if required secrets are missing.
+services:
+  vp-api:
+    build: .
+    image: vibepilot-vp-api
+    container_name: vp-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Bind to localhost only; put a TLS-terminating reverse proxy in front.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data/post_queue:/app/post_queue
+      - ./data/generated_images:/app/generated_images
+    env_file:
+      - ${VP_ENV_FILE:-.env}
+    environment:
+      - POST_QUEUE_DIR=/app/post_queue
+      - GENERATED_IMAGES_DIR=/app/generated_images
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - vp_net
+
+  db:
+    image: postgres:16
+    container_name: vp-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema:/docker-entrypoint-initdb.d:ro
+    env_file:
+      - ${VP_ENV_FILE:-.env}
+    environment:
+      POSTGRES_DB: ${DB_NAME:-vibepilot}
+      POSTGRES_USER: ${DB_USER:-vibepilot}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vp_net
+
+networks:
+  vp_net: {}
+
+volumes:
+  postgres_data:

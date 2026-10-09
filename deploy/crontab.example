@@ -1,0 +1,15 @@
+# Example crontab for a host install at /opt/vibepilot (adjust paths to your setup).
+# Install with: crontab deploy/crontab.example
+# Vibepilot: 3x per day auto-rotating categories
+0 8  * * * /usr/bin/docker exec vp-api sh -lc '/app/run_post.sh'
+0 13 * * * /usr/bin/docker exec vp-api sh -lc '/app/run_post.sh'
+0 18 * * * /usr/bin/docker exec vp-api sh -lc '/app/run_post.sh'
+
+# Vibepilot: scheduler-based tick every 5 minutes
+*/5 * * * * cd /opt/vibepilot && /opt/vibepilot/bin/vp_tick.sh >> /var/log/vibepilot_tick.log 2>&1
+
+# Vibepilot: Facebook / token health ping every hour
+0 * * * * cd /opt/vibepilot && docker exec vp-api sh -lc '/app/run_health_ping.sh' >> /opt/vibepilot/logs/health_ping.log 2>&1
+
+# Vibepilot: Daily backup to Storj at 2 AM
+0 2 * * * /opt/vibepilot/scripts/backup_to_storj.sh >> /var/log/vibepilot-backup.log 2>&1

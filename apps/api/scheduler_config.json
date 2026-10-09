@@ -1,0 +1,105 @@
+{
+  "post_times": [
+    "07:00",
+    "13:00",
+    "18:00"
+  ],
+  "preview_generation_time": "18:00",
+  "blog_posts_per_week": 3,
+  "brand_voice": 86,
+  "accounts": [
+    {
+      "id": "demo",
+      "name": "Sunny Side Pool Co.",
+      "schedules": [
+        {
+          "action": "run_post_live",
+          "category": null,
+          "days_of_week": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "description": "Demo live posts 3x/day",
+          "enabled": true,
+          "id": "demo_auto_live_3x",
+          "last_run_key": null,
+          "times": [
+            "08:00",
+            "13:00",
+            "18:00"
+          ]
+        },
+        {
+          "action": "generate_to_queue",
+          "category": "realistic",
+          "days_of_week": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "description": "Generate a realistic post into the queue every morning",
+          "enabled": true,
+          "id": "demo_generate_queue_morning",
+          "last_run_key": null,
+          "times": [
+            "09:00"
+          ]
+        },
+        {
+          "action": "post_from_queue",
+          "category": null,
+          "days_of_week": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "description": "Post the next approved queued item every evening",
+          "enabled": true,
+          "id": "demo_post_from_queue_evening",
+          "last_run_key": null,
+          "times": [
+            "20:00"
+          ]
+        },
+        {
+          "action": "run_blog_live",
+          "category": "blog",
+          "days_of_week": [
+            "mon",
+            "wed",
+            "fri"
+          ],
+          "description": "Demo blog posts Mon/Wed/Fri at 10:00",
+          "enabled": true,
+          "id": "demo_blog_mwf_10",
+          "last_run_key": null,
+          "times": [
+            "10:00"
+          ]
+        }
+      ],
+      "timezone": "America/New_York"
+    }
+  ],
+  "brand_voice_score": 46,
+  "posts_per_day": [
+    "08:00",
+    "13:00",
+    "18:00"
+  ],
+  "tenants": [],
+  "time_zone": "America/New_York"
+}

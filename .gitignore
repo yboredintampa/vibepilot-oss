@@ -1,0 +1,82 @@
+# ---------------------------------------------------------------------------
+# Secrets & environment
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env
+!tenants/*.env.example
+**/config.env
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+*.p12
+*_token
+*_secret
+id_*
+*keypair*.json
+
+# ---------------------------------------------------------------------------
+# Runtime data (never commit user content / PII)
+# ---------------------------------------------------------------------------
+/data/
+generated_images/
+post_queue/
+post_state/
+admin_feedback/
+apps/api/posts/
+apps/api/images/
+apps/api/force_run_state.json
+fails.txt
+uploads/
+backups/
+logs/
+*.log
+*.jsonl
+*.db
+*.sqlite
+*.sqlite3
+/postgres_data/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ---------------------------------------------------------------------------
+# Node
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+build/
+.next/
+npm-debug.log*
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Backups / editor / OS / local scripts
+# ---------------------------------------------------------------------------
+*.bak
+*.bak.*
+*.save
+*.save.*
+*.verify
+*.orig
+*.old
+*.swp
+*~
+*.ps1
+*.bat
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/

@@ -1,0 +1,45 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VibePilot App</title>
+  <meta name="theme-color" content="#2a0f4a">
+  <link rel="manifest" href="/app/manifest.webmanifest">
+  <link rel="icon" href="/app/icons/icon-192.png">
+  <link rel="stylesheet" href="/app/styles.css">
+</head>
+<body>
+  <header class="hdr">
+    <div class="brand">VibePilot</div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/app/calendar.html">Calendar</a>
+      <button id="installBtn">Install</button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <section class="panel">
+      <h2>Dashboard</h2>
+      <p>Status: <span id="status">Ready</span></p>
+      <div class="row">
+        <input id="apiBase" placeholder="API Base (https://...)" />
+        <button id="saveApi">Save API Base</button>
+        <button id="checkApi">Check API Health</button>
+      </div>
+      <div class="row">
+        <button id="openCalendar">Open Content Calendar (read-only demo)</button>
+      </div>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+
+  <script src="/app/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/app/service-worker.js');
+    }
+  </script>
+</body>
+</html>
