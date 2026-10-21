@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-tests:
+    name: Python tests (${{ matrix.suite.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - name: apps/api
+            dir: apps/api
+            requirements: apps/api/requirements.txt
+          - name: vibepilot-backend
+            dir: vibepilot-backend
+            requirements: vibepilot-backend/requirements.txt
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ${{ matrix.suite.requirements }}
+      - name: Install dependencies
+        # Both requirements files use psycopg2-binary, so no pg_config/libpq-dev is needed.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ${{ matrix.suite.requirements }} pytest httpx
+      - name: Run pytest
+        working-directory: ${{ matrix.suite.dir }}
+        run: python -m pytest -q tests
+
+  frontend-build:
+    name: Front-end build (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [vibepilot-ui, apps/api/web]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+      - name: Install and build
+        working-directory: ${{ matrix.app }}
+        run: |
+          npm ci
+          npm run build
