@@ -21,7 +21,6 @@ import secrets
 
 from vp_security import require_env, constant_time_equals, rate_limit, client_ip, is_internal_request
 
-# from translate_post import translate_caption_local  # DISABLED - TODO: Fix later
 import poster
 
 router = APIRouter()
@@ -53,7 +52,7 @@ def _create_admin_session(username: str) -> str:
     Stored in memory with an expiry timestamp.
     """
     token = secrets.token_hex(32)
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(
+    expires_at = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(
         seconds=SESSION_TTL_SECONDS
     )
     ADMIN_SESSIONS[token] = expires_at.isoformat() + "Z"
@@ -79,7 +78,7 @@ def _validate_admin_session(token: Optional[str]) -> bool:
         ADMIN_SESSIONS.pop(token, None)
         return False
 
-    if exp < datetime.datetime.utcnow():
+    if exp < datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None):
         ADMIN_SESSIONS.pop(token, None)
         return False
 
@@ -212,7 +211,7 @@ def pretty_category(cat: str) -> str:
 
 def log_json(path: str, payload: dict) -> None:
     payload = dict(payload)
-    payload["ts"] = datetime.datetime.utcnow().isoformat() + "Z"
+    payload["ts"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -377,7 +376,7 @@ def read_privacy_proofs_summary() -> dict:
     total_shared = 0
     month = 0
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     if not os.path.exists(PRIVACY_PROOFS_LOG):
@@ -700,54 +699,17 @@ async def admin_set_scheduler_config(payload: dict = Body(...)):
     "/item/{item_id}/translate", dependencies=[Depends(require_admin_session)]
 )
 async def admin_translate_item(item_id: str, payload: dict = Body(...)):
-    target_lang = (payload.get("target_lang") or "").lower()
-    file_name = payload.get("file_name")
-    caption = payload.get("caption") or ""
-
-    if not target_lang:
-        return JSONResponse(
-            {"ok": False, "error": "target_lang required"},
-            status_code=400,
-        )
-
-    lang_labels = {
-        "en": "EN",
-        "es": "ES",
-        "zh": "ZH",
-        "hi": "HI",
-        "ar": "AR",
-        "fr": "FR",
-        "ru": "RU",
-        "pt": "PT",
-        "bn": "BN",
-        "de": "DE",
-        "ja": "JA",
-        "pa": "PA",
-    }
-    lang_label = lang_labels.get(target_lang, target_lang.upper())
-
-    translated = caption  # translate_caption_local(caption, target_lang) - DISABLED
-
-    data, path, fname = find_post_by_id_or_file(item_id, file_name)
-    if data and path:
-        data["caption"] = translated
-        data["language"] = target_lang
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-
-    log_json(
-        os.path.join(LOG_DIR, "admin_translations.log"),
+    """
+    Caption translation is not implemented yet (see ROADMAP in README.md).
+    Returns 501 instead of pretending to translate, and leaves the post untouched.
+    """
+    return JSONResponse(
         {
-            "post_id": item_id,
-            "file_name": fname or file_name,
-            "target_lang": target_lang,
-            "lang_label": lang_label,
-            "original": caption,
-            "translated": translated,
+            "ok": False,
+            "error": "Caption translation is not implemented yet.",
         },
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
     )
-
-    return {"ok": True, "translated": translated, "lang_label": lang_label}
 
 
 @router.post(
@@ -890,7 +852,7 @@ async def admin_post_now(item_id: str, payload: dict = Body(...)):
         result = post_to_facebook(caption, image_path)
 
         data["status"] = "posted"
-        data["posted_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+        data["posted_at"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
 
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
@@ -963,24 +925,6 @@ async def admin_health():
     """
     return JSONResponse(
         {"ok": True, "message": "Admin dashboard is online and reachable."}
-    )
-
-
-@router.get(
-    "/scheduler-preview",
-    dependencies=[Depends(require_admin_session)],
-    response_class=JSONResponse,
-)
-async def scheduler_preview():
-    """
-    Stub endpoint used by the UI to show that scheduler previews
-    will be wired to real logic later.
-    """
-    return JSONResponse(
-        {
-            "ok": True,
-            "message": "Scheduler preview stub – backend hook can be wired when ready.",
-        }
     )
 
 

@@ -3,7 +3,6 @@ import html
 import json
 import os
 import re
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -29,7 +28,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$")
 _ID_RE = re.compile(r"^[A-Za-z0-9_.@-]{1,128}$")
 
 # Display name used on public pages until per-user business profiles are stored in the DB.
-DEMO_BUSINESS_NAME = os.getenv("BUSINESS_NAME", "Sunny Side Bakery")
+DEMO_BUSINESS_NAME = os.getenv("BUSINESS_NAME", "Sunny Side Pool Co.")
 
 
 def _check_id(value: str, field: str = "user_id") -> str:
@@ -97,42 +96,25 @@ async def submit_review(review: ReviewSubmission, request: Request):
         review.token,
         review.customer_email
     )
-    # Send email notification
-    # TODO: Look up the business owner's email from the database.
+    # Notify the business owner. Until per-business profiles are stored in the
+    # database (see ROADMAP), the recipient and business name come from env vars.
     user_email = os.getenv("REVIEW_NOTIFICATION_EMAIL", "")
     if user_email:
         email_service.send_review_notification(
             to_email=user_email,
-            business_name=DEMO_BUSINESS_NAME,  # TODO: Get from DB
+            business_name=DEMO_BUSINESS_NAME,
             rating=review.rating,
             review_text=review.review_text,
             customer_name=review.customer_name,
             job_id=verification["job_id"],
         )
 
-
-    
-    # Store review (mock for now, will use DB later)
-    review_data = {
-        "id": f"review_{datetime.now().timestamp()}",
-        "user_id": verification["user_id"],
-        "job_id": verification["job_id"],
-        "rating": review.rating,
-        "review_text": review.review_text,
-        "customer_name": review.customer_name,
-        "customer_email": review.customer_email,
-        "verified": True,
-        "timestamp": datetime.now().isoformat(),
-        "verification_token": review.token
-    }
-    
-    # TODO: Store in database
-    
+    # Only the verified rating event is persisted (analytics store above).
+    # Review text and customer name are not stored yet (see ROADMAP).
     return JSONResponse({
         "success": True,
         "message": "Review submitted successfully!",
-        "discount_code": "VERIFIED10",  # 10% off next service
-        "review_id": review_data["id"]
+        "discount_code": "VERIFIED10",  # static demo code shown on the landing page
     })
 
 
@@ -302,8 +284,8 @@ async def review_showcase(user_id: str, request: Request):
     _check_id(user_id)
     stats = analytics_service.get_user_stats(user_id)
 
-    # Get user info (mock for now)
-    business_name = html.escape(DEMO_BUSINESS_NAME)  # TODO: Get from DB
+    # Business name comes from BUSINESS_NAME until profiles live in the DB (see ROADMAP).
+    business_name = html.escape(DEMO_BUSINESS_NAME)
     
     return HTMLResponse(f"""
     <!DOCTYPE html>
@@ -429,8 +411,8 @@ async def tech_rate_customer(rating: TechRating):
             rating.note
         )
         
-        # TODO: Mint on-chain hash (Solana integration)
-        
+        # On-chain anchoring of rating hashes is not implemented (see ROADMAP).
+
         return JSONResponse({
             "success": True,
             "message": "Customer rated successfully",
