@@ -150,9 +150,12 @@ _lock = threading.Lock()
 
 
 def client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
+    # Only trust X-Forwarded-For when explicitly running behind a trusted proxy;
+    # otherwise any client could spoof it to dodge rate limits.
+    if os.getenv("TRUST_PROXY_HEADERS", "false").lower() == "true":
+        fwd = request.headers.get("x-forwarded-for", "")
+        if fwd:
+            return fwd.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
 
 

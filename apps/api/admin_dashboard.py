@@ -844,7 +844,10 @@ async def admin_post_now(item_id: str, payload: dict = Body(...)):
         return JSONResponse({"ok": False, "error": "not approved yet"}, status_code=400)
 
     try:
-        from .facebook_poster import post_to_facebook
+        try:
+            from .facebook_poster import post_to_facebook
+        except ImportError:  # running as top-level modules (Docker: uvicorn main:app)
+            from facebook_poster import post_to_facebook
 
         caption = data.get("caption") or ""
         image_path = data.get("image_path") or None

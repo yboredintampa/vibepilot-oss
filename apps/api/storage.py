@@ -83,7 +83,7 @@ async def upload_file(
     Returns public-ish URL (your CDN/gateway)
     """
 
-    tenant_id = user["tenant"]
+    tenant_id = user["tenant_id"]
     bucket = os.environ["STORJ_BUCKET"]
     prefix = os.getenv("STORJ_PREFIX", "").rstrip("/")
     ext = os.path.splitext(file.filename)[1] or ""

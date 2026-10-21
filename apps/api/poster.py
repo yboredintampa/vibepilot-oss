@@ -389,6 +389,49 @@ def _generate_caption(category: str, weather_context: str) -> tuple[str, bool]:
         return _fallback_caption(category, weather_context), False
 
 
+CAPTION_DEDUPE_ATTEMPTS = max(1, int(os.getenv("CAPTION_DEDUPE_ATTEMPTS", "3")))
+
+
+def _find_similar_caption(caption: str) -> Optional[str]:
+    """Return a previously stored caption that this one duplicates, if any."""
+    dup, match = dedupe_store.is_duplicate_caption(caption)
+    if not dup:
+        dup, match = dedupe_store.is_duplicate_opening(caption)
+    return match if dup else None
+
+
+def _generate_unique_caption(category: str, weather_context: str) -> tuple[str, bool, Optional[str]]:
+    """
+    Generate a caption and reject near-duplicates of earlier captions.
+
+    Each LLM caption is compared with the dedupe store (exact match, fuzzy
+    similarity >= 0.92, or a near-identical opening phrase). Duplicates are
+    regenerated up to CAPTION_DEDUPE_ATTEMPTS times. If every attempt is a
+    duplicate, the last caption is still queued but flagged via the returned
+    `duplicate_of` value so the human reviewer can see it.
+    """
+    caption, used_llm, duplicate_of = "", False, None
+    for attempt in range(1, CAPTION_DEDUPE_ATTEMPTS + 1):
+        caption, used_llm = _generate_caption(category, weather_context)
+        try:
+            duplicate_of = _find_similar_caption(caption)
+        except Exception as exc:
+            log.warning("[poster] Dedupe check failed, skipping it: %s", exc)
+            return caption, used_llm, None
+        if duplicate_of is None:
+            return caption, used_llm, None
+        if not used_llm:
+            # Fallback captions are fixed text; regenerating would not help.
+            break
+        log.warning(
+            "[poster] Caption too similar to an earlier one (attempt %d/%d); regenerating.",
+            attempt,
+            CAPTION_DEDUPE_ATTEMPTS,
+        )
+    log.warning("[poster] Queueing a caption flagged as a possible duplicate for human review.")
+    return caption, used_llm, duplicate_of
+
+
 def _normalized_post_mode() -> str:
     mode = (POST_MODE or "queue").lower()
     if mode not in VALID_POST_MODES:
@@ -451,7 +494,7 @@ def _run_single_post_internal(requested_category: Optional[str] = None) -> Dict[
         log.info("[poster] Weather context: %s", weather_context)
 
     # Caption
-    caption, used_llm = _generate_caption(category, weather_context)
+    caption, used_llm, duplicate_of = _generate_unique_caption(category, weather_context)
     log.info("[poster] Final caption (used_llm=%s): %s", used_llm, caption)
 
     # Image
@@ -493,6 +536,7 @@ def _run_single_post_internal(requested_category: Optional[str] = None) -> Dict[
                 "debug_source": "poster.py",
                 "weather_summary": weather_context,
                 "used_llm": used_llm,
+                "possible_duplicate_of": duplicate_of,
                 "post_mode": post_mode,
                 "requested_category": cli_category,
                 "enqueued_at_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat(),
@@ -502,14 +546,9 @@ def _run_single_post_internal(requested_category: Optional[str] = None) -> Dict[
         log.info("[poster] Enqueued post: %s", file_path)
         try:
             dedupe_store.save_caption(caption)
-            log.info("[poster] ✅ Saved caption to dedupe DB")
-        except Exception as e:
-            log.warning("[poster] ⚠️ Failed to save caption to dedupe: %s", e)
-        try:
-            dedupe_store.save_caption(caption)
             log.info("[poster] Saved caption to dedupe DB")
         except Exception as e:
-            log.warning("[poster] Failed to save caption: %s", e)
+            log.warning("[poster] Failed to save caption to dedupe DB: %s", e)
     except Exception as exc:
         log.exception("[poster] FAILED to enqueue post: %s", exc)
         return {
