@@ -302,7 +302,7 @@ def generate_deleted_insights(max_files: int = 50) -> Dict[str, Any]:
 
         if analysis:
             payload = {
-                "generated_at": dt.datetime.utcnow().isoformat() + "Z",
+                "generated_at": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat() + "Z",
                 "sample_size": len(examples),
                 "used_llm": True,
                 "suggestions": analysis,

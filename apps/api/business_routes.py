@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -209,7 +209,7 @@ feedback_store: Dict[str, FeedbackItem] = {}
 
 def _ensure_business(business_id: str) -> BusinessSettings:
     if business_id not in business_store:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         business_store[business_id] = BusinessSettings(
             business_id=business_id,
             name=None,
@@ -248,7 +248,7 @@ def update_business_settings(
     data = payload.dict(exclude_unset=True)
     for k, v in data.items():
         setattr(settings, k, v)
-    settings.updated_at = datetime.utcnow()
+    settings.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     business_store[business_id] = settings
     return {"ok": True, "settings": settings}
 
@@ -274,7 +274,7 @@ def get_category_weights(business_id: str):
     _ensure_business(business_id)
     if business_id not in weights_store:
         # default mix if nothing set yet
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         default_weights: Dict[CategoryName, float] = {
             "authoritative": 0.05,
             "blog": 0.02,
@@ -318,7 +318,7 @@ def set_category_weights(business_id: str, payload: CategoryWeightsBody):
         business_id=business_id,
         weights=normalized,
         normalized=normalized_flag,
-        updated_at=datetime.utcnow(),
+        updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     weights_store[business_id] = res
     return res
@@ -335,7 +335,7 @@ def set_category_weights(business_id: str, payload: CategoryWeightsBody):
 def get_schedule(business_id: str):
     _ensure_business(business_id)
     if business_id not in schedule_store:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         schedule_store[business_id] = Schedule(
             business_id=business_id,
             timezone="America/New_York",
@@ -381,7 +381,7 @@ def update_schedule(business_id: str, payload: UpdateScheduleBody):
         sched.blog_schedule = data["blog_schedule"]
     if "boost_rules" in data:
         sched.boost_rules = data["boost_rules"]
-    sched.updated_at = datetime.utcnow()
+    sched.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     schedule_store[business_id] = sched
     return {"ok": True, "schedule": sched}
 
@@ -434,7 +434,7 @@ def today_review(
     since: Optional[datetime] = None,
 ):
     _ensure_business(business_id)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     if since is None:
         since = now - timedelta(days=1)
     until = now
@@ -478,7 +478,7 @@ def submit_feedback(post_id: str, payload: FeedbackBody):
         )
 
     fb_id = f"fbk_{len(feedback_store) + 1}"
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     flags = payload.flags or FeedbackFlags()
 
     fb = FeedbackItem(
@@ -506,7 +506,7 @@ def feedback_summary(
 ):
     _ensure_business(business_id)
     if to is None:
-        to = datetime.utcnow()
+        to = datetime.now(timezone.utc).replace(tzinfo=None)
     if from_ is None:
         from_ = to - timedelta(days=30)
 
@@ -591,7 +591,7 @@ def category_plan(
     weights = get_category_weights(business_id)
 
     if date_ is None:
-        date_ = datetime.utcnow().date()
+        date_ = datetime.now(timezone.utc).replace(tzinfo=None).date()
 
     dow_idx = date_.weekday()  # 0=Mon
     dow_map: List[DOW] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]

@@ -32,7 +32,8 @@ from __future__ import annotations
 import os
 import json
 import logging
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Any
 
@@ -52,7 +53,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] [UTC] %(message)s",
 )
-logging.Formatter.converter = lambda *args: datetime.utcnow().timetuple()
+logging.Formatter.converter = time.gmtime  # log timestamps in UTC
 log = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
@@ -263,7 +264,7 @@ def _generate_longform_caption(category: str) -> str:
 def main() -> None:
     _ensure_dir(POSTS_DIR)
 
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%d_%H%M%S")
     base_name = f"{ts}_{CATEGORY}"
 
     md_path = POSTS_DIR / f"{base_name}.md"
@@ -307,7 +308,7 @@ def main() -> None:
 
     meta = {
         "category": CATEGORY,
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z",
         "markdown_path": str(md_path),
         "image_prompt_path": str(pr_path),
         "image_path": image_path,

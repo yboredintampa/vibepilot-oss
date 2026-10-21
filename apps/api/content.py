@@ -1,7 +1,7 @@
 # content.py
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -170,7 +170,7 @@ def preview_content(user=Depends(require_user)):
             "preview": {
                 "tenant_id": tenant_id,
                 "text": text,
-                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "generated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z",
             },
         }
 

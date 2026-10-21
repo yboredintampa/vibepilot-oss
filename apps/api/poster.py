@@ -495,7 +495,7 @@ def _run_single_post_internal(requested_category: Optional[str] = None) -> Dict[
                 "used_llm": used_llm,
                 "post_mode": post_mode,
                 "requested_category": cli_category,
-                "enqueued_at_utc": dt.datetime.utcnow().isoformat(),
+                "enqueued_at_utc": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat(),
             },
         )
         file_path = result.get("file_path") if isinstance(result, dict) else str(result)

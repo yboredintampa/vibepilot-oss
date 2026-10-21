@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from .database import get_db
 from .security import require_admin
@@ -40,5 +40,5 @@ async def command_center_json(db = Depends(get_db)):
         "acres_purchasable": acres,
         "countdown_to_300k": remaining,
         "estimated_days_to_300k": days_estimate,
-        "current_time_utc": datetime.utcnow().isoformat() + "Z"
+        "current_time_utc": datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z"
     }

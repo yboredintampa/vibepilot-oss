@@ -22,6 +22,7 @@ Fill the queue using:
 import os
 import json
 import datetime
+import time
 import logging
 from typing import Dict, Any, List, Optional
 
@@ -38,7 +39,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] [UTC] %(message)s",
 )
-logging.Formatter.converter = datetime.datetime.utcnow().timetuple  # type: ignore
+logging.Formatter.converter = time.gmtime  # log timestamps in UTC
 log = logging.getLogger("scheduler_tick")
 
 
@@ -171,7 +172,7 @@ def post_item(path: str) -> bool:
     try:
         result = post_to_facebook(caption, image_path)
         data["status"] = "posted"
-        data["posted_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+        data["posted_at"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
         data.setdefault("scheduler", {})
         data["scheduler"]["result"] = result
 

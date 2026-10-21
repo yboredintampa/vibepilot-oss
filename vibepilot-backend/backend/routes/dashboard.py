@@ -151,7 +151,7 @@ async def dashboard_home(request: Request):
         if last_week["revenue"] > 0 else 0
     )
     
-    return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse(request, "dashboard.html", {
         "request": request,
         "user": user,
         "todays_posts": todays_posts,
@@ -167,7 +167,7 @@ async def dashboard_posts(request: Request):
     user = get_current_user(request)
     posts = get_user_posts(user["id"])
     
-    return templates.TemplateResponse("dashboard_posts.html", {
+    return templates.TemplateResponse(request, "dashboard_posts.html", {
         "request": request,
         "user": user,
         "posts": posts,
@@ -180,7 +180,7 @@ async def dashboard_analytics(request: Request):
     user = get_current_user(request)
     analytics = get_user_analytics(user["id"])
     
-    return templates.TemplateResponse("dashboard_analytics.html", {
+    return templates.TemplateResponse(request, "dashboard_analytics.html", {
         "request": request,
         "user": user,
         "analytics": analytics,
@@ -202,7 +202,7 @@ async def dashboard_settings(request: Request):
     # Get CTA recommendations
     strategies = optimizer.get_all_strategies(posts_per_week)
     
-    return templates.TemplateResponse("dashboard_settings.html", {
+    return templates.TemplateResponse(request, "dashboard_settings.html", {
         "request": request,
         "user": user,
         "posts_per_week": posts_per_week,

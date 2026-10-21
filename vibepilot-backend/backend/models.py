@@ -1,6 +1,11 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utcnow() -> datetime:
+    """Naive UTC timestamp (replacement for the deprecated datetime.utcnow)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 Base = declarative_base()
 
@@ -15,8 +20,8 @@ class User(Base):
     subscription_tier = Column(String, default="starter") # starter/pro/beast
     founding_rank = Column(Integer, nullable=True)        # locked after 72 hrs
     active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_active = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    last_active = Column(DateTime, default=_utcnow)
     
     def is_founding_member(self):
         return self.founding_rank is not None and self.founding_rank <= 500

@@ -4,7 +4,7 @@ Command Center dashboard - metrics and KPIs for VibePilot
 from fastapi import APIRouter, Depends
 
 from vp_security import require_admin
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Defense in depth: also protected where the router is mounted.
@@ -56,6 +56,6 @@ async def command_center_json():
         "countdown_to_300k": remaining,
         "estimated_days_to_300k": days_estimate,
         "tiers": {"starter": 0},  # Placeholder
-        "current_time_utc": datetime.utcnow().isoformat() + "Z",
+        "current_time_utc": datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z",
         "note": "Database connection pending - showing placeholder metrics"
     }

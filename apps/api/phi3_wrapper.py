@@ -7,7 +7,7 @@ from collections import OrderedDict
 from typing import Optional
 
 def _now_iso() -> str:
-    return _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return _dt.datetime.now(_dt.timezone.utc).replace(tzinfo=None).replace(microsecond=0).isoformat() + "Z"
 
 _ALLOWED = {
     "realistic",

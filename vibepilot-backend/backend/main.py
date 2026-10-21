@@ -73,7 +73,7 @@ async def command_center_html(request: Request):
         data = await command_center_json(db=db)
     finally:
         db.close()
-    return templates.TemplateResponse("command_center.html", {"request": request, **data})
+    return templates.TemplateResponse(request, "command_center.html", {"request": request, **data})
 
 
 # Command center JSON feed (for HTMX auto-refresh, admin only)

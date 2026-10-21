@@ -261,7 +261,7 @@ def scheduler_post_next_approved():
 
         # Mark it as posted in the queue file
         data["status"] = "posted"
-        data["posted_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+        data["posted_at"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
 
         try:
             with open(path, "w", encoding="utf-8") as f:
