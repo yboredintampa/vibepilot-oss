@@ -165,7 +165,9 @@ def add_text_overlay(
         if not line:
             current_y += line_height * 0.5
             continue
-        w, _ = draw.textsize(line, font=font)
+        # ImageDraw.textsize() was removed in Pillow 10; textbbox() is the supported API.
+        left, _, right, _ = draw.textbbox((0, 0), line, font=font, stroke_width=3)
+        w = right - left
         x = (width - w) // 2
 
         draw.text(
