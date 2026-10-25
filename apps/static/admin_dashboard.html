@@ -419,27 +419,44 @@ function updateQueueCount(count) {
 }
 
 function escapeHtml(text) {
-  if (!text) return "";
-  return text
+  // Escape all HTML-significant characters (including quotes, so values are
+  // safe inside attributes too). Non-strings (numbers, null) are coerced first.
+  if (text === null || text === undefined) return "";
+  return String(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeUrl(url) {
+  // Only allow http(s), same-origin relative paths and inline image data.
+  const u = String(url || "").trim();
+  if (/^(https?:\/\/|\/(?!\/)|data:image\/)/i.test(u)) return escapeHtml(u);
+  return "";
+}
+
+function safeColor(c) {
+  // Category/status colours are CSS colour tokens; drop anything else.
+  const v = String(c || "").trim();
+  return /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([0-9.,%\s]+\)|hsla?\([0-9.,%\s]+\))$/i.test(v) ? v : "transparent";
 }
 
 function cardHtml(item) {
   const caption = escapeHtml(item.caption || "");
-  const created = item.created_at ? item.created_at.slice(0, 19).replace("T", " ") : "—";
+  const created = item.created_at ? String(item.created_at).slice(0, 19).replace("T", " ") : "—";
   const deletedClass = item.status === "deleted" ? " deleted" : "";
   const statusLabel = (item.status || "pending_review").replace(/_/g, " ").toUpperCase();
   const imgPart = item.image_url
-    ? `<img src="${item.image_url}" alt="Generated image for ${item.category_label}">`
+    ? `<img src="${safeUrl(item.image_url)}" alt="Generated image for ${escapeHtml(item.category_label)}">`
     : `<div style="height:160px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;opacity:0.65;">No image</div>`;
 
   return `
-    <div class="post-card${deletedClass}" data-id="${item.id}" data-file="${item.file_name}">
+    <div class="post-card${deletedClass}" data-id="${escapeHtml(item.id)}" data-file="${escapeHtml(item.file_name)}">
       <div class="post-header-badges">
-        <div class="pill pill-accent" style="background:${item.category_color};color:#020617;">${item.category_label}</div>
-        <div class="pill pill-status" style="background:${item.status_color};">${statusLabel}</div>
+        <div class="pill pill-accent" style="background:${safeColor(item.category_color)};color:#020617;">${escapeHtml(item.category_label)}</div>
+        <div class="pill pill-status" style="background:${safeColor(item.status_color)};">${escapeHtml(statusLabel)}</div>
       </div>
 
       <div class="post-image-wrap">
@@ -447,8 +464,8 @@ function cardHtml(item) {
       </div>
 
       <div class="post-meta">
-        <span style="max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">ID: ${item.id}</span>
-        <span>${created}</span>
+        <span style="max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">ID: ${escapeHtml(item.id)}</span>
+        <span>${escapeHtml(created)}</span>
       </div>
 
       <textarea class="caption-input">${caption}</textarea>
