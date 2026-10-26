@@ -1,4 +1,6 @@
-fastapi==0.115.0
+fastapi==0.133.0
+# starlette pinned >= 1.0.1 for CVE-2026-48710 (CISA KEV); fastapi 0.133.0 is the first release allowing it
+starlette==1.0.1
 uvicorn[standard]==0.30.6
 python-dotenv==1.0.1
 pydantic==2.9.2
@@ -7,7 +9,7 @@ pydantic==2.9.2
 psycopg[binary,pool]==3.2.3
 
 # Auth
-PyJWT==2.9.0
+PyJWT==2.14.0
 
 # Replicate client (using legacy URL mode already patched)
 replicate==1.0.7
@@ -16,5 +18,9 @@ requests==2.32.3
 # Storage / uploads / images
 boto3==1.35.63
 python-multipart==0.0.12
-Pillow==10.4.0
+Pillow==13.0.0
 psycopg2-binary==2.9.9
+
+# Security pins for transitive dependencies (critical advisories)
+anyio==4.14.2      # CVE-2026-63374
+certifi==2026.10.19  # PYSEC-2026-4320
