@@ -16,7 +16,7 @@ replicate==1.0.7
 requests==2.33.0
 
 # Storage / uploads / images
-boto3==1.43.122  # >=1.40: botocore no longer caps urllib3<1.27 for Python<3.10, which made osv-scanner see a urllib3 conflict
+boto3==1.43.122  # recent botocore no longer caps urllib3<1.27 for Python<3.10, which made osv-scanner see a urllib3 conflict
 python-multipart==0.0.31
 Pillow==13.0.0
 psycopg2-binary==2.9.9
