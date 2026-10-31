@@ -33,4 +33,22 @@ Only the latest commit on the default branch is supported with security fixes.
 - Keep object-storage buckets private and rotate API keys regularly.
 - Run behind a TLS-terminating reverse proxy; keep `VP_COOKIE_SECURE=true`.
 
+## Protection against prompt injection
+
+Text from outside (customer profiles, weather, photo descriptions, deleted posts)
+can try to trick the language model. `apps/api/llm_safety.py` (copied to
+`vibepilot-backend/backend/llm_safety.py`) enforces these rules in code, not by
+asking the model nicely:
+
+- Secrets (API keys, tokens, passwords from the environment) are never put in
+  prompts; a prompt that contains one is refused.
+- Outside content is wrapped in `<untrusted_content>` blocks with hidden text
+  removed, and the system prompt says it is data, not instructions.
+- Model output is cleaned before it is stored or posted: images and links to
+  domains not in `VP_OUTPUT_LINK_ALLOWLIST` are removed, HTML and scripts are
+  neutralised, and output that leaks a secret or part of the system prompt is
+  discarded.
+- Only an allowlist of tasks, tones, trades and categories is permitted.
+- Posting to Facebook needs an approved post (or `VP_ALLOW_DIRECT_POST=true`).
+
 See [DEPLOYMENT.md](DEPLOYMENT.md) for secure deployment instructions.

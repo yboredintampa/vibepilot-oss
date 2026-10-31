@@ -22,6 +22,10 @@ import secrets
 from vp_security import require_env, constant_time_equals, rate_limit, client_ip, is_internal_request
 
 import poster
+try:
+    from . import llm_safety as safety
+except ImportError:  # running as top-level modules (Docker: uvicorn main:app)
+    import llm_safety as safety
 
 router = APIRouter()
 
@@ -852,7 +856,8 @@ async def admin_post_now(item_id: str, payload: dict = Body(...)):
         caption = data.get("caption") or ""
         image_path = data.get("image_path") or None
 
-        result = post_to_facebook(caption, image_path)
+        safety.require_approval(data)  # outbound action: only for human-approved items
+        result = post_to_facebook(caption, image_path, approved=True)
 
         data["status"] = "posted"
         data["posted_at"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"

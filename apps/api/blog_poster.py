@@ -40,6 +40,11 @@ from typing import Optional, Any
 import replicate
 from image_prompt_manager import generate_image
 
+try:
+    from . import llm_safety as safety
+except ImportError:  # running as top-level modules / python blog_poster.py
+    import llm_safety as safety
+
 # Optional phi3 fallback (if module exists)
 try:
     from phi3_wrapper import generate_caption as phi3_generate_caption  # type: ignore
@@ -60,7 +65,11 @@ log = logging.getLogger(__name__)
 # Environment
 # -------------------------------------------------------------------
 POSTS_DIR = Path(os.getenv("POSTS_DIR", "/app/posts")).resolve()
-CATEGORY = os.getenv("BLOG_CATEGORY", "blog")
+# Task/topic guard: the category is used in the prompt and in file names, so it must be
+# one of the known social-marketing categories (raises safety.ScopeError at import otherwise).
+CATEGORY = safety.require_choice(
+    os.getenv("BLOG_CATEGORY", "blog"), safety.ALLOWED_CATEGORIES, "BLOG_CATEGORY"
+)
 
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 REPLICATE_LLM = os.getenv("REPLICATE_LLM", "meta/meta-llama-3-8b-instruct")
@@ -147,9 +156,16 @@ Write the post as a single, clean article suitable for a blog page.
 """
 
 
+def _blog_system_prompt(category: str) -> str:
+    """System prompt = the instructions above + untrusted-content policy. No secrets."""
+    return safety.build_system_prompt(_build_blog_prompt(category).strip())
+
+
 def _call_replicate_blog(category: str) -> str:
+    safety.require_action("generate_blog_post")
     client = _get_replicate_client()
-    prompt = _build_blog_prompt(category)
+    system_prompt = _blog_system_prompt(category)
+    prompt = f"Write the long-form '{category}' blog post now."
 
     log.info(
         "[blog_poster] Calling Replicate LLM=%s for blog content (target=%s words)...",
@@ -159,15 +175,21 @@ def _call_replicate_blog(category: str) -> str:
 
     output = client.run(
         REPLICATE_LLM,
-        input={
-            "prompt": prompt,
-            "max_tokens": BLOG_WORD_TARGET * 2,  # generous cap
-            "temperature": CAPTION_TEMP,
-        },
+        input=safety.llm_inputs(
+            system_prompt,
+            prompt,
+            max_tokens=BLOG_WORD_TARGET * 2,  # generous cap
+            temperature=CAPTION_TEMP,
+        ),
     )
 
-    text = _normalize_llm_output(output)
-    return text.strip()
+    text = _normalize_llm_output(output).strip()
+    # Output filter: block leaks/off-task text, strip links, images and HTML before saving.
+    checked = safety.filter_output(text, protected_texts=[system_prompt], mode="text")
+    if checked.blocked:
+        log.error("[blog_poster] Output rejected by safety filter: %s", ",".join(checked.reasons))
+        return ""
+    return checked.text
 
 
 def _call_phi3_fallback(category: str) -> str:
@@ -184,7 +206,8 @@ def _call_phi3_fallback(category: str) -> str:
     try:
         log.info("[blog_poster] Using phi3_wrapper fallback for blog content...")
         caption = phi3_generate_caption(category) or ""
-        return caption.strip()
+        checked = safety.filter_output(caption.strip(), mode="text")
+        return "" if checked.blocked else checked.text
     except Exception as exc:  # pragma: no cover
         log.exception("[blog_poster] phi3 fallback failed: %s", exc)
         return ""

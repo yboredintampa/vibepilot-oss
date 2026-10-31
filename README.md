@@ -77,7 +77,8 @@ flowchart LR
    `deleted_insights.py` (run on demand or from cron) asks the LLM to summarize the
    patterns, and the dashboard shows the result at `/admin/insights/deleted`.
    Setting `POST_MODE=direct` also publishes each post to Facebook right
-   away, bypassing review; the default, `queue`, waits for approval.
+   away, bypassing review, but only if you also set `VP_ALLOW_DIRECT_POST=true`
+   (otherwise the post stays queued); the default, `queue`, waits for approval.
 5. **Scheduled publishing** (`apps/api/scheduler_tick.py`). Run by cron
    (`bin/vp_tick.sh`), it checks the `post_times` in
    `scheduler_config.json`; when a slot is due it posts the **oldest approved,

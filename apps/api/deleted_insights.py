@@ -9,6 +9,11 @@ from typing import Dict, Any, List
 
 import replicate
 
+try:
+    from . import llm_safety as safety
+except ImportError:  # running as top-level modules / python -m
+    import llm_safety as safety
+
 # Match paths used in admin_dashboard.py
 QUEUE_DIR = "/app/post_queue"
 DELETED_DIR = os.path.join(QUEUE_DIR, "_deleted")
@@ -183,6 +188,8 @@ def build_prompt(
 
     lines: List[str] = ["\n".join(header)]
 
+    # The captions and the owner's notes are free text, so they go into one delimited data block.
+    sample_lines: List[str] = []
     for i, ex in enumerate(examples, start=1):
         cap_text = ex.get("caption") or ""
         if len(cap_text) > 320:
@@ -197,7 +204,13 @@ def build_prompt(
             f"note={ex.get('note')!r}, "
             f"caption={cap_text!r}"
         )
-        lines.append(line)
+        sample_lines.append(line)
+
+    lines.append(
+        safety.wrap_untrusted(
+            "\n".join(sample_lines), source="deleted_posts", max_chars=max(2000, 450 * len(examples))
+        )
+    )
 
     lines.append(
         "\nNow output 3 clearly labeled sections with bullet points only:\n"
@@ -210,6 +223,12 @@ def build_prompt(
     return "\n".join(lines)
 
 
+_INSIGHTS_INSTRUCTIONS = (
+    "You are an analyst for a local pool-service business. You only review deleted social media "
+    "posts and suggest improvements to captions, images and prompts."
+)
+
+
 def call_llm(prompt: str) -> str:
     """
     Call the Replicate LLM and return plain text.
@@ -220,14 +239,25 @@ def call_llm(prompt: str) -> str:
         return ""
 
     try:
+        safety.require_action("analyze_deleted_posts")
+        system_prompt = safety.build_system_prompt(_INSIGHTS_INSTRUCTIONS)
         output = replicate.run(
             REPLICATE_LLM,
-            input={"prompt": prompt},
+            input=safety.llm_inputs(system_prompt, prompt),
         )
         if isinstance(output, str):
-            return output.strip()
-        text = "".join(str(chunk) for chunk in output)
-        return text.strip()
+            text = output.strip()
+        else:
+            text = "".join(str(chunk) for chunk in output).strip()
+        # This text is shown in the admin dashboard: block leaks, strip links/images/HTML.
+        # (The off-task heuristic is skipped: this report legitimately discusses prompts and code.)
+        checked = safety.filter_output(
+            text, protected_texts=[system_prompt], mode="text", check_scope=False
+        )
+        if checked.blocked:
+            log.error("LLM output rejected by safety filter: %s", ",".join(checked.reasons))
+            return ""
+        return checked.text
     except Exception as e:
         log.error("LLM call failed: %s", e)
         return ""

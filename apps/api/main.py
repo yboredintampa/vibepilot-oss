@@ -27,6 +27,10 @@ database_password_present()
 from admin_dashboard import router as admin_router
 from command_center import router as command_center_router
 import poster
+try:
+    from . import llm_safety as safety
+except ImportError:  # running as top-level modules (Docker: uvicorn main:app)
+    import llm_safety as safety
 
 log = logging.getLogger("vibepilot.main")
 
@@ -248,9 +252,11 @@ def scheduler_post_next_approved():
             )
 
         # Actually post to Facebook using your helper in poster.py
+        safety.require_approval(data)  # outbound action: only for human-approved items
         fb_ok = poster.post_to_facebook(
             caption=caption,
             image_path=image_path if image_path else None,
+            approved=True,
         )
 
         if not fb_ok:

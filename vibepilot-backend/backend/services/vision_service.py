@@ -5,6 +5,8 @@ from io import BytesIO
 from PIL import Image
 import replicate
 
+from backend import llm_safety as safety
+
 
 class VisionCaptioner:
     def __init__(self):
@@ -16,6 +18,7 @@ class VisionCaptioner:
         """Generate base description from image URL using BLIP"""
         print(f"[VISION] Calling BLIP with image: {image_url}")
         try:
+            safety.require_action("describe_image")
             output = replicate.run(
                 "salesforce/blip:2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746",
                 input={
@@ -24,18 +27,27 @@ class VisionCaptioner:
                 }
             )
             
-            description = str(output).strip()
+            description = self._clean_description(str(output))
             print(f"[VISION] BLIP returned: {description}")
             return description
             
         except Exception as e:
             print(f"[VISION] BLIP error: {e}")
             return "A swimming pool with equipment visible"
-    
+
+    @staticmethod
+    def _clean_description(text: str) -> str:
+        """Image captions are untrusted (text inside a picture can say anything)."""
+        checked = safety.filter_output(text.strip(), mode="text")
+        if checked.blocked or not checked.text:
+            raise ValueError("image description rejected by safety filter")
+        return checked.text
+
     def describe_from_base64(self, image_base64: str) -> str:
         """Generate description from base64 encoded image"""
         print(f"[VISION] Processing base64 image")
         try:
+            safety.require_action("describe_image")
             if "," in image_base64:
                 image_base64 = image_base64.split(",")[1]
             
@@ -57,7 +69,7 @@ class VisionCaptioner:
             import os as os_module
             os_module.remove(temp_path)
             
-            description = str(output).strip()
+            description = self._clean_description(str(output))
             print(f"[VISION] BLIP returned: {description}")
             return description
             
@@ -72,32 +84,36 @@ class VisionCaptioner:
         TRADE_REFINEMENT_PROMPTS = {
             "pool_service": """You are a pool service expert.
 
-Base image description: "{description}"
-
-Refine this description to be specific and useful for pool service marketing:
+Refine the base image description in the user message (shown in a data block) to be specific and useful for pool service marketing:
 - Identify specific equipment if visible (filter, pump, heater, salt cell, etc)
 - Use industry terminology (DE filter, cartridge, skimmer, plaster, pebble, etc)
 - Identify issues or maintenance needs
 - Keep under 60 words
-- Focus on what pool owners care about
-
-Refined description:""",
+- Focus on what pool owners care about""",
         }
         
-        prompt_template = TRADE_REFINEMENT_PROMPTS.get(trade, TRADE_REFINEMENT_PROMPTS["pool_service"])
-        prompt = prompt_template.format(description=base_description)
+        instructions = TRADE_REFINEMENT_PROMPTS.get(trade, TRADE_REFINEMENT_PROMPTS["pool_service"])
         
         try:
+            safety.require_action("refine_description")
+            system_prompt = safety.build_system_prompt(instructions)
+            prompt = (
+                "Base image description:\n"
+                + safety.wrap_untrusted(base_description, source="image_description", max_chars=800)
+                + "\n\nRefined description:"
+            )
             output = replicate.run(
                 os.getenv("REPLICATE_LLM", "meta/meta-llama-3-8b-instruct"),
-                input={
-                    "prompt": prompt,
-                    "max_tokens": 150,
-                    "temperature": 0.3
-                }
+                input=safety.llm_inputs(system_prompt, prompt, max_tokens=150, temperature=0.3),
             )
             
-            refined = "".join(output).strip()
+            checked = safety.filter_output(
+                "".join(output).strip(), protected_texts=[system_prompt], mode="text"
+            )
+            if checked.blocked:
+                print(f"[VISION] Refinement rejected by safety filter: {','.join(checked.reasons)}")
+                return base_description
+            refined = checked.text
             print(f"[VISION] Refined description: {refined}")
             
             if len(refined) > 200 or not refined:
