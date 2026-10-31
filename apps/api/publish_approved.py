@@ -34,6 +34,7 @@ def publish_post(post_file, post_data):
     """Publish a single post to Facebook"""
     try:
         import poster
+        import llm_safety as safety
         
         caption = post_data.get("caption", "")
         image_path = post_data.get("image_path", "")
@@ -41,7 +42,8 @@ def publish_post(post_file, post_data):
         print(f"[{datetime.now()}] Publishing: {caption[:50]}...")
         
         # Post to Facebook
-        success = poster.post_to_facebook(caption, image_path)
+        safety.require_approval(post_data)  # outbound action: only for human-approved items
+        success = poster.post_to_facebook(caption, image_path, approved=True)
         
         if success:
             # Mark as posted

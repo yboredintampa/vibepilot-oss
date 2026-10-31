@@ -4,6 +4,11 @@ from typing import Optional, Dict, Any
 
 import requests
 
+try:
+    from . import llm_safety as safety
+except ImportError:  # running as top-level modules (Docker: uvicorn main:app)
+    import llm_safety as safety
+
 logger = logging.getLogger(__name__)
 
 PAGE_ACCESS_TOKEN = os.getenv("META_PAGE_ACCESS_TOKEN")
@@ -72,7 +77,9 @@ def _post_photo(caption: str, image_path: str) -> Dict[str, Any]:
     return {"ok": True, "response": payload}
 
 
-def post_to_facebook(caption: str, image_path: Optional[str] = None) -> Dict[str, Any]:
+def post_to_facebook(
+    caption: str, image_path: Optional[str] = None, *, approved: bool = False
+) -> Dict[str, Any]:
     """
     Public entry point used by:
       - poster.py
@@ -81,8 +88,12 @@ def post_to_facebook(caption: str, image_path: Optional[str] = None) -> Dict[str
     caption: text to post
     image_path: optional absolute path inside the container (e.g. /app/generated_images/xxx.png)
 
+    approved: must be True. Outbound action; the caller confirms a human approved the item
+    (or the operator opted in to direct posting). Otherwise safety.ApprovalRequired is raised.
+
     Returns a dict with at least {"ok": True/False, ...}
     """
+    safety.require_action("post_to_facebook", approved=approved)
     _ensure_env()
 
     caption = (caption or "").strip()

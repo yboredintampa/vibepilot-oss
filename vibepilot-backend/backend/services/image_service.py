@@ -8,6 +8,8 @@ import urllib.request
 from typing import List, Tuple, Dict, Any
 import replicate
 
+from backend import llm_safety as safety
+
 
 class ImageGenerator:
     def __init__(self):
@@ -42,6 +44,7 @@ class ImageGenerator:
     
     def generate_pool_images(self, description: str, count: int = 2, aspect_ratio: str = "16:9") -> List[str]:
         """Generate high-quality pool service images with FLUX"""
+        safety.require_action("generate_images")
         print(f"[IMAGE] Generating {count} images with FLUX")
         print(f"[IMAGE] Model: {self.model}")
         print(f"[IMAGE] Description: {description}")

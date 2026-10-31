@@ -159,6 +159,7 @@ def post_item(path: str) -> bool:
     Returns True on success, False on failure.
     """
     from facebook_poster import post_to_facebook  # import inside to avoid cycles
+    import llm_safety as safety
 
     data = _load_post(path)
     if not data:
@@ -170,7 +171,8 @@ def post_item(path: str) -> bool:
     log.info("Posting approved item to Facebook: %s", os.path.basename(path))
 
     try:
-        result = post_to_facebook(caption, image_path)
+        safety.require_approval(data)  # outbound action: only for human-approved items
+        result = post_to_facebook(caption, image_path, approved=True)
         data["status"] = "posted"
         data["posted_at"] = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
         data.setdefault("scheduler", {})
