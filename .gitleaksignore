@@ -1,0 +1,12 @@
+# Synthetic canary values in test_llm_safety.py (verified 2026-11-07: lowercase sequential/'planted'
+# placeholders, wrong length/charset for real OpenAI/Replicate keys). Exact fingerprints only; no path/rule allowlist.
+2ad88a5b54d8c27a514bd533fe95d30e6079319d:apps/api/tests/test_llm_safety.py:generic-api-key:16
+2ad88a5b54d8c27a514bd533fe95d30e6079319d:apps/api/tests/test_llm_safety.py:generic-api-key:338
+2ad88a5b54d8c27a514bd533fe95d30e6079319d:apps/api/tests/test_llm_safety.py:generic-api-key:369
+2ad88a5b54d8c27a514bd533fe95d30e6079319d:vibepilot-backend/tests/test_llm_safety.py:generic-api-key:14
+2ad88a5b54d8c27a514bd533fe95d30e6079319d:vibepilot-backend/tests/test_llm_safety.py:generic-api-key:145
+apps/api/tests/test_llm_safety.py:generic-api-key:16
+apps/api/tests/test_llm_safety.py:generic-api-key:338
+apps/api/tests/test_llm_safety.py:generic-api-key:369
+vibepilot-backend/tests/test_llm_safety.py:generic-api-key:14
+vibepilot-backend/tests/test_llm_safety.py:generic-api-key:145
